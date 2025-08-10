@@ -5,7 +5,5 @@ kiwisolver==1.4.8
 numpy==2.3.2
 packaging==25.0
 PyQt6==6.9.1
-PyQt6-Qt6==6.9.1
-PyQt6_sip==13.10.2
 vispy==0.15.2
 matplotlib==3.10.5
