@@ -1,6 +1,6 @@
 // g++ test_intersect_AB_t.c intersect_AB_t.c -o test_intersect_AB_t.out
 
-#include "intersect_AB_t.h"
+#include "../intersect_AB_t.h"
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
