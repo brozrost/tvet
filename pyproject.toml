@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tvet"
+version = "0.1.0"
+description = "Asteroid shape / lightcurve tools"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools]
+packages = ["tvet"]
+
+[project.scripts]
+tvet = "tvet.cli:main"
