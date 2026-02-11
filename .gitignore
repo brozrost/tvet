@@ -212,3 +212,5 @@ __marimo__/
 # CLI output files
 output/
 shadowing/
+
+*.out
