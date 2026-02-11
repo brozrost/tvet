@@ -38,6 +38,11 @@ void boundingBox(
     double hatv[3];
     crossProduct3D(hatu, hatw, hatv);
 
+    // Flip sign to match original fortran code
+    hatv[0] = -hatv[0];
+    hatv[1] = -hatv[1];
+    hatv[2] = -hatv[2];
+
     // Project each node into (u, v) coordinates
     for(size_t i = 0; i < nof_nodes; i++) {
         u[i] = dotProduct3D(hatu, nodes[i]);
@@ -51,7 +56,7 @@ void boundingBox(
         int j2 = faces[j][2];
 
         double u0 = u[j0], u1 = u[j1], u2 = u[j2];
-        double v0 = v[j0], v1 = u[j1], v2 = u[j2];
+        double v0 = v[j0], v1 = v[j1], v2 = v[j2];
 
         double u_min = u0;
         if(u1 < u_min) {u_min = u1;}
