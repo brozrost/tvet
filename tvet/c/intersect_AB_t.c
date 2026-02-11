@@ -2,9 +2,6 @@
 #include "intersect_AB_t.h"
 #include <stdbool.h>
 
-// t is a 3x3 matrix flattened to length 9 in column major
-#define T(i,j) (t[(i) + 3*(j)])
-
 /// @brief Computes the intersection of a line and a triangle in 3D space. 
 /// @param A Point on the line in 3D space.
 /// @param B Direction vector of the line.
@@ -12,7 +9,7 @@
 /// @param C Output parameter, intersection point.
 /// @param has_solution Boolean result. True if intersection exists.
 void intersect_AB_t(
-    const double A[3], const double B[3], const double t[9], double C[3], bool *has_solution
+    const double A[3], const double B[3], const double t[3][3], double C[3], bool *has_solution
 ) {
     double area[3];
     const double EPS = 0.0; 
@@ -23,10 +20,10 @@ void intersect_AB_t(
         int i2 = (i + 2) % 3;
 
         // Vector from point A to vertex i1
-        double v1[3] = {T(i1, 0) - A[0], T(i1, 1) - A[1], T(i1, 2) - A[2]};
+        double v1[3] = {t[i1][0] - A[0], t[i1][1] - A[1], t[i1][2] - A[2]};
 
         // Vector from point A to vertex i2
-        double v2[3] = {T(i2, 0) - A[0], T(i2, 1) - A[1], T(i2, 2) - A[2]};
+        double v2[3] = {t[i2][0] - A[0], t[i2][1] - A[1], t[i2][2] - A[2]};
 
         double cross_product[3];
         crossProduct3D(v1, v2, cross_product);
@@ -52,8 +49,8 @@ void intersect_AB_t(
 
     C[0] = 0.0; C[1] = 0.0; C[2] = 0.0;
     for(int i = 0; i < 3; i++) {
-        C[0] += area[i] * T(i, 0);
-        C[1] += area[i] * T(i, 1);
-        C[2] += area[i] * T(i, 2);
+        C[0] += area[i] * t[i][0];
+        C[1] += area[i] * t[i][1];
+        C[2] += area[i] * t[i][2];
     }
 }

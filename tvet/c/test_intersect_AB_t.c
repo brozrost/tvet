@@ -8,10 +8,10 @@
 #define EPS_TEST 1e-12
 
 static void test_intersect_AB_t_INTERSECT(void) {
-    const double t[9] = {
-        0.0, 1.0, 0.0,
-        0.0, 0.0, 1.0,
-        0.0, 0.0, 0.0
+    const double t[3][3] = {
+        {0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0}
     };
 
     const double A[3] = {0.25, 0.25, 1.0};
@@ -28,10 +28,10 @@ static void test_intersect_AB_t_INTERSECT(void) {
 }
 
 static void test_intersect_AB_t_NOINTERSECT(void) {
-    const double t[9] = {
-        0.0, 1.0, 0.0,
-        0.0, 0.0, 1.0,
-        0.0, 0.0, 0.0
+    const double t[3][3] = {
+        {0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0}
     };
 
     const double A[3] = {2.0, 2.0, 1.0};
