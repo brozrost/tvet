@@ -1,3 +1,4 @@
+#pragma once
 #include <stdbool.h>
 
 void intersect_AB_t(
