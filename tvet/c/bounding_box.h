@@ -1,4 +1,5 @@
 #pragma once
+#include <stddef.h>
 
 void boundingBox(
     const int (*faces)[3], size_t nof_faces,

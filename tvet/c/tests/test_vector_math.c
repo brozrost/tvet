@@ -1,3 +1,9 @@
+// g++ test_vector_math.c ../vector_math.c -o out/test_vector_math.out
+
+#include "../vector_math.h"
+#include <math.h>
+#include <assert.h>
+
 #define EPS_TEST 1e-12
 
 static void test_dotProduct3D(void) {
