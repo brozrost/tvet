@@ -49,7 +49,7 @@ static void test_shadowing(void) {
     double mu_i[2] = {0};
     double mu_e[2] = {0};
 
-    mu((const double *) normals, 2, s, mu_i);
+    mu(normals, 2, s, mu_i);
     mu_e[0] = mu_i[0]; mu_e[1] = mu_i[1];
 
     double nu_i[2] = {0};

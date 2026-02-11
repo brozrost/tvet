@@ -5,29 +5,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-/// @brief 
-/// @param normals 
-/// @param nof_faces 
-/// @param s 
-/// @param mu_i 
 void mu(
-    const double *normals, size_t nof_faces, const double s[3], double *mu_i
+    const double (*normals)[3], size_t nof_faces, const double s[3], double *mu_i
 ) {
     #pragma omp parallel for if(nof_faces > 256)
     for(size_t i = 0; i < nof_faces; i++) {
-        const double *n = &normals[i * 3];
-        double d = n[0]*s[0] + n[1]*s[1] + n[2]*s[2];
-
+        double d = normals[i][0]*s[0] + normals[i][1]*s[1] + normals[i][2]*s[2];
         mu_i[i] = (d > 0.0) ? d : 0.0;
     }
 }
 
-/// @brief 
-/// @param mu_i 
-/// @param mu_e 
-/// @param nof_faces 
-/// @param nu_i 
-/// @param nu_e 
 void non(
     const double *mu_i, const double *mu_e, size_t nof_faces, double *nu_i, double *nu_e
 ) {
@@ -45,15 +32,6 @@ void non(
     }
 }
 
-/// @brief 
-/// @param faces 
-/// @param nof_faces 
-/// @param nodes 
-/// @param nof_nodes 
-/// @param normals 
-/// @param centers 
-/// @param s 
-/// @param nu_i 
 void nu(
     const int (*faces)[3], size_t nof_faces,
     const double (*nodes)[3], size_t nof_nodes,
@@ -77,21 +55,12 @@ void nu(
             centers[i][2]
         };
 
-        for(size_t j = 0; j < nof_faces; j++) {
+        for(size_t j = 0; j < nof_faces && nu_i[i] > 0.0; j++) {
             if(i == j) {continue;}
+            if(nu_i[j] <= 0.0) {continue;}
 
-            double i_umin = boxes[i][0];
-            double i_umax = boxes[i][1];
-            double i_vmin = boxes[i][2];
-            double i_vmax = boxes[i][3];
-
-            double j_umin = boxes[j][0];
-            double j_umax = boxes[j][1];
-            double j_vmin = boxes[j][2];
-            double j_vmax = boxes[j][3];
-
-            if((j_umax < i_umin) || (j_umin > i_umax) ||
-                (j_vmax < i_vmin) || (j_vmin > i_vmax)
+            if((boxes[j][1] < boxes[i][0]) || (boxes[j][0] > boxes[i][1]) ||
+                (boxes[j][3] < boxes[i][2]) || (boxes[j][2] > boxes[i][3])
             ) {
                 continue;
             }
