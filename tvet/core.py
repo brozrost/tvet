@@ -8,7 +8,7 @@ import vispy.gloo
 
 from . import scattering
 from .io import load_obj
-from ._shadowing import Shadowing
+from . import _tvet
 
 class Asteroid(object):
     def __init__(self, args=None, filename=None):
@@ -76,26 +76,48 @@ class Asteroid(object):
         self.nu_i = np.zeros((len(self.faces)))
         self.nu_e = np.zeros((len(self.faces)))
 
-        # Create Fortran-contiguous arrays of the exact ctypes-compatible dtype
-        mu_i_F = np.asfortranarray(self.mu_i, dtype=np.double)
-        mu_e_F = np.asfortranarray(self.mu_e, dtype=np.double)
-        nu_i_F = np.asfortranarray(self.nu_i, dtype=np.double)
-        nu_e_F = np.asfortranarray(self.nu_e, dtype=np.double)
-        faces_F = np.asfortranarray(self.faces + 1, dtype=np.intc)
-        vertices_F = np.asfortranarray(self.vertices, dtype=np.double)
-        normals_F = np.asfortranarray(self.normals, dtype=np.double)
-        centers_F = np.asfortranarray(self.centers, dtype=np.double)
-        s_F = np.asfortranarray(self.s, dtype=np.double)
-        o_F = np.asfortranarray(self.o, dtype=np.double)
+        mu_i_C = np.ascontiguousarray(self.mu_i, dtype=np.double)
+        mu_e_C = np.ascontiguousarray(self.mu_e, dtype=np.double)
+        nu_i_C = np.ascontiguousarray(self.nu_i, dtype=np.double)
+        nu_e_C = np.ascontiguousarray(self.nu_e, dtype=np.double)
 
-        # Call fmodpy subroutines **without** triggering hidden copies
-        Shadowing.shadowing_module.non(mu_i_F, mu_e_F, nu_i_F, nu_e_F)
-        Shadowing.shadowing_module.nu(faces_F, vertices_F, normals_F, centers_F, s_F, nu_i_F)
-        Shadowing.shadowing_module.nu(faces_F, vertices_F, normals_F, centers_F, o_F, nu_e_F)
+        faces_C = np.ascontiguousarray(self.faces, dtype=np.intc)
+        vertices_C = np.ascontiguousarray(self.vertices, dtype=np.double)
+        normals_C = np.ascontiguousarray(self.normals, dtype=np.double)
+        centers_C = np.ascontiguousarray(self.centers, dtype=np.double)
 
-        # If you need your original C-contiguous arrays back:
-        self.nu_i = np.array(nu_i_F, order='C')
-        self.nu_e = np.array(nu_e_F, order='C')
+        s_C = np.ascontiguousarray(self.s, dtype=np.double)
+        o_C = np.ascontiguousarray(self.o, dtype=np.double)
+
+        nof_faces = len(self.faces)
+        nof_nodes = len(self.vertices)
+
+        assert faces_C.dtype == np.intc and faces_C.flags['C_CONTIGUOUS']
+        assert vertices_C.dtype == np.double and vertices_C.flags['C_CONTIGUOUS']
+        assert normals_C.dtype == np.double and normals_C.flags['C_CONTIGUOUS']
+        assert centers_C.dtype == np.double and centers_C.flags['C_CONTIGUOUS']
+        assert mu_i_C.dtype == np.double and mu_i_C.flags['C_CONTIGUOUS']
+        assert mu_e_C.dtype == np.double and mu_e_C.flags['C_CONTIGUOUS']
+        assert nu_i_C.dtype == np.double and nu_i_C.flags['C_CONTIGUOUS']
+        assert nu_e_C.dtype == np.double and nu_e_C.flags['C_CONTIGUOUS']
+        assert s_C.shape == (3,) and s_C.dtype == np.double and s_C.flags['C_CONTIGUOUS']
+        assert o_C.shape == (3,) and o_C.dtype == np.double and o_C.flags['C_CONTIGUOUS']
+
+        assert faces_C.shape[1] == 3
+        assert vertices_C.shape[1] == 3
+        assert normals_C.shape[1] == 3
+        assert centers_C.shape[1] == 3
+        assert mu_i_C.shape == (nof_faces,)
+        assert mu_e_C.shape == (nof_faces,)
+        assert nu_i_C.shape == (nof_faces,)
+        assert nu_e_C.shape == (nof_faces,)
+
+        _tvet.non(mu_i_C, mu_e_C, nof_faces, nu_i_C, nu_e_C)
+        _tvet.nu(faces_C, nof_faces, vertices_C, nof_nodes, normals_C, centers_C, s_C, nu_i_C)
+        _tvet.nu(faces_C, nof_faces, vertices_C, nof_nodes, normals_C, centers_C, o_C, nu_e_C)
+
+        self.nu_i = nu_i_C
+        self.nu_e = nu_e_C
 
     def get_fluxes(self):
         self.get_geometry()
