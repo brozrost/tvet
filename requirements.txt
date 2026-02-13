@@ -1,9 +1,3 @@
-fmodpy==1.7.4
-freetype-py==2.5.1
-hsluv==5.0.4
-kiwisolver==1.4.8
 numpy==2.3.2
-packaging==25.0
-PyQt6==6.9.1
 vispy==0.15.2
 matplotlib==3.10.5

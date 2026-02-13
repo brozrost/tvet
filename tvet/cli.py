@@ -6,7 +6,6 @@ import numpy as np
 import os
 import vispy.app
 from .core import Asteroid
-from PyQt6.QtWidgets import QApplication, QFileDialog
 
 def parse_vector(vec_str):
     return np.array(list(map(float, vec_str.split(','))))

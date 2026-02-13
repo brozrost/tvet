@@ -92,26 +92,6 @@ class Asteroid(object):
         nof_faces = len(self.faces)
         nof_nodes = len(self.vertices)
 
-        assert faces_C.dtype == np.intc and faces_C.flags['C_CONTIGUOUS']
-        assert vertices_C.dtype == np.double and vertices_C.flags['C_CONTIGUOUS']
-        assert normals_C.dtype == np.double and normals_C.flags['C_CONTIGUOUS']
-        assert centers_C.dtype == np.double and centers_C.flags['C_CONTIGUOUS']
-        assert mu_i_C.dtype == np.double and mu_i_C.flags['C_CONTIGUOUS']
-        assert mu_e_C.dtype == np.double and mu_e_C.flags['C_CONTIGUOUS']
-        assert nu_i_C.dtype == np.double and nu_i_C.flags['C_CONTIGUOUS']
-        assert nu_e_C.dtype == np.double and nu_e_C.flags['C_CONTIGUOUS']
-        assert s_C.shape == (3,) and s_C.dtype == np.double and s_C.flags['C_CONTIGUOUS']
-        assert o_C.shape == (3,) and o_C.dtype == np.double and o_C.flags['C_CONTIGUOUS']
-
-        assert faces_C.shape[1] == 3
-        assert vertices_C.shape[1] == 3
-        assert normals_C.shape[1] == 3
-        assert centers_C.shape[1] == 3
-        assert mu_i_C.shape == (nof_faces,)
-        assert mu_e_C.shape == (nof_faces,)
-        assert nu_i_C.shape == (nof_faces,)
-        assert nu_e_C.shape == (nof_faces,)
-
         _tvet.non(mu_i_C, mu_e_C, nof_faces, nu_i_C, nu_e_C)
         _tvet.nu(faces_C, nof_faces, vertices_C, nof_nodes, normals_C, centers_C, s_C, nu_i_C)
         _tvet.nu(faces_C, nof_faces, vertices_C, nof_nodes, normals_C, centers_C, o_C, nu_e_C)
@@ -119,10 +99,10 @@ class Asteroid(object):
         self.nu_i = nu_i_C
         self.nu_e = nu_e_C
 
-    def get_fluxes(self):
+    def get_fluxes(self, s=None, o=None):
         self.get_geometry()
-        s = self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0)
-        o = self.args.o if self.args and hasattr(self.args, "o") else (0, 0, 1)
+        s = s if s is not None else (self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0))
+        o = o if o is not None else (self.args.o if self.args and hasattr(self.args, "o") else (0, 0, 1))
         self.get_cosines(s=s, o=o)
 
         phi_s = 1361. # W/m^2
@@ -141,7 +121,7 @@ class Asteroid(object):
         self.total = np.sum(self.phi_e)
 
     def light_curve(self, n=100):
-        s = self.s
+        s = self.s if hasattr(self, "s") else np.array(self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0))
         x, y, z = s
         total = []
 
@@ -154,15 +134,19 @@ class Asteroid(object):
 
             s_ = np.array([x_, y_, z_])
 
-            self.get_cosines(s=s_)
-            self.get_fluxes()
+            self.get_fluxes(s=s_, o=self.o if hasattr(self, "o") else None)
             total.append((gamma, self.total))
 
         total = np.array(total)
 
         # Normalize
         total[:, 0] = (total[:, 0] - np.min(total[:, 0])) / (np.max(total[:, 0]) - np.min(total[:, 0]))
-        total[:, 1] = -(total[:, 1] - np.min(total[:, 1])) / (np.max(total[:, 1]) - np.min(total[:, 1]))
+
+        den = np.max(total[:, 1]) - np.min(total[:, 1])
+        if den > 0.0:
+            total[:, 1] = -(total[:, 1] - np.min(total[:, 1])) / den
+        else:
+            total[:, 1] = 0.0
 
         return total
 

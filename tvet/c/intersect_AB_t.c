@@ -19,10 +19,10 @@ void intersect_AB_t(
         // Vector from point A to vertex i2
         double v2[3] = {t[i2][0] - A[0], t[i2][1] - A[1], t[i2][2] - A[2]};
 
-        double cross_product[3];
-        crossProduct3D(v1, v2, cross_product);
+        double C[3];
+        crossProduct3D(v1, v2, C);
 
-        area[i] = 0.5 * dotProduct3D(B, cross_product);
+        area[i] = 0.5 * dotProduct3D(B, C);
     }
 
     // Check if signs are consistent
@@ -30,7 +30,9 @@ void intersect_AB_t(
         *has_solution = true;
     } else if((area[0] <= +EPS) && (area[1] <= +EPS) && (area[2] <= +EPS)) {
         *has_solution = true;
-    } else {*has_solution = false;}
+    } else {
+        *has_solution = false;
+    }
 
     if(!(*has_solution)) {return;}
 

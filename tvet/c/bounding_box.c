@@ -42,13 +42,13 @@ void boundingBox(
     }
 
     // For every face compute min/max of its three projected vertices
-    for(size_t j = 0; j < nof_faces; j++) {
-        int j0 = faces[j][0];
-        int j1 = faces[j][1];
-        int j2 = faces[j][2];
+    for(size_t i = 0; i < nof_faces; i++) {
+        int i0 = faces[i][0];
+        int i1 = faces[i][1];
+        int i2 = faces[i][2];
 
-        double u0 = u[j0], u1 = u[j1], u2 = u[j2];
-        double v0 = v[j0], v1 = v[j1], v2 = v[j2];
+        double u0 = u[i0], u1 = u[i1], u2 = u[i2];
+        double v0 = v[i0], v1 = v[i1], v2 = v[i2];
 
         double u_min = u0;
         if(u1 < u_min) {u_min = u1;}
@@ -66,10 +66,10 @@ void boundingBox(
         if(v1 > v_max) {v_max = v1;}
         if(v2 > v_max) {v_max = v2;}
 
-        boxes[j][0] = u_min;
-        boxes[j][1] = u_max;
-        boxes[j][2] = v_min;
-        boxes[j][3] = v_max;
+        boxes[i][0] = u_min;
+        boxes[i][1] = u_max;
+        boxes[i][2] = v_min;
+        boxes[i][3] = v_max;
     }
 
     free(u); free(v);
