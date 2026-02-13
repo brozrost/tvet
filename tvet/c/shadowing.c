@@ -9,7 +9,7 @@
 void mu(
     const double (*normals)[3], size_t nof_faces, const double s[3], double *mu_i
 ) {
-    #pragma omp parallel for private(i) shared(normals, mu_i, s)
+    #pragma omp parallel for
     for(size_t i = 0; i < nof_faces; i++) {
         double d = dotProduct3D(normals[i], s);
         mu_i[i] = (d > 0.0) ? d : 0.0;
@@ -19,7 +19,7 @@ void mu(
 void non(
     const double *mu_i, const double *mu_e, size_t nof_faces, double *nu_i, double *nu_e
 ) {
-    #pragma omp parallel for private(i) shared(mu_i, mu_e, nu_i, nu_e)
+    #pragma omp parallel for
     for(size_t i = 0; i < nof_faces; i++) {
         nu_i[i] = 1.0;
         nu_e[i] = 1.0;
@@ -44,9 +44,13 @@ void nu(
 
     boundingBox(faces, nof_faces, nodes, nof_nodes, s, boxes);
 
-    #pragma omp parallel for \
-    private(i, j, k, A, B, C, t, has_solution, tmp, area) \
-    shared(nodes, faces, centres, s, nu_i)
+    // Use a separate array to mark initially lit triangles 
+    // to avoid data race
+    unsigned char *initially_lit = (unsigned char *) malloc(nof_faces * sizeof(*initially_lit));
+    if(!initially_lit) {free(boxes); return;}
+    for(size_t j = 0; j < nof_faces; j++) {initially_lit[j] = (nu_i[j] > 0.0);}
+
+    #pragma omp parallel for
     for(size_t i = 0; i < nof_faces; i++) {
         if(nu_i[i] <= 0.0) {continue;}
 
@@ -58,7 +62,7 @@ void nu(
 
         for(size_t j = 0; j < nof_faces && nu_i[i] > 0.0; j++) {
             if(i == j) {continue;}
-            if(nu_i[j] <= 0.0) {continue;}
+            if(!initially_lit[j]) {continue;}
 
             if((boxes[j][1] < boxes[i][0]) || (boxes[j][0] > boxes[i][1]) ||
                 (boxes[j][3] < boxes[i][2]) || (boxes[j][2] > boxes[i][3])) {
@@ -88,5 +92,6 @@ void nu(
         }
     }
 
+    free(initially_lit);
     free(boxes);
 }

@@ -36,12 +36,14 @@ void boundingBox(
     hatv[2] = -hatv[2];
 
     // Project each node into (u, v) coordinates
+    #pragma omp parallel for
     for(size_t i = 0; i < nof_nodes; i++) {
         u[i] = dotProduct3D(hatu, nodes[i]);
         v[i] = dotProduct3D(hatv, nodes[i]);
     }
 
     // For every face compute min/max of its three projected vertices
+    #pragma omp parallel for
     for(size_t i = 0; i < nof_faces; i++) {
         int i0 = faces[i][0];
         int i1 = faces[i][1];
