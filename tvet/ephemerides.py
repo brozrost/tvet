@@ -9,7 +9,7 @@ class HorizonsError(RuntimeError):
 
 def fetch_ephems(
     *,
-    command: str,
+    body: str,
     center: str,
     start_time: str,
     stop_time: str,
@@ -21,7 +21,7 @@ def fetch_ephems(
         "format": "json",
         "MAKE_EPHEM": "YES",
         "EPHEM_TYPE": "VECTORS",
-        "COMMAND": f"'{command}'",
+        "COMMAND": f"'{body}'",
         "CENTER": f"'{center}'",
         "START_TIME": f"'{start_time}'",
         "STOP_TIME": f"'{stop_time}'",
@@ -86,9 +86,9 @@ def fetch_ephems(
 
     return xyz
 
-def get_ephems():
+if __name__ == "__main__":
     o_xyz = fetch_ephems(
-        command="499",
+        body="499",
         center="500@399",
         start_time="2006-01-01",
         stop_time="2006-01-20",
@@ -96,7 +96,7 @@ def get_ephems():
     )
 
     s_xyz = fetch_ephems(
-        command="499",
+        body="499",
         center="500@10",
         start_time="2006-01-01",
         stop_time="2006-01-20",
@@ -105,6 +105,3 @@ def get_ephems():
 
     print("o[0] XYZ (km):", o_xyz[0])
     print("s[0] XYZ (km):", s_xyz[0])
-
-if __name__ == "__main__":
-    get_ephems()
