@@ -8,6 +8,7 @@ import vispy.gloo
 
 from . import scattering
 from .io import load_obj
+from . import ephemerides as ephems
 from . import _tvet
 
 class Asteroid(object):
@@ -119,6 +120,56 @@ class Asteroid(object):
         self.phi_e = self.I * self.mu_e * self.nu_e
 
         self.total = np.sum(self.phi_e)
+
+    def get_ephems(
+        *,
+        body: str,
+        start_time: str,
+        stop_time: str,
+        step_size: str,
+        observer_center: str = "500@399",
+        sun_center: str = "500@10",
+        normalize: bool = True,
+        timeout: float = 30.0
+    ):
+        o_xyz = ephems.fetch_ephems(
+            body=body,
+            center=observer_center,
+            start_time=start_time,
+            stop_time=stop_time,
+            step_size=step_size,
+            timeout=timeout
+        )
+
+        s_xyz = ephems.fetch_ephems(
+            body=body,
+            center=sun_center,
+            start_time=start_time,
+            stop_time=stop_time,
+            step_size=step_size,
+            timeout=timeout
+        )
+
+        o = np.asarray(o_xyz, dtype=np.float64)
+        s = np.asarray(s_xyz, dtype=np.float64)
+
+        if o.shape != s.shape:
+            raise ephems.HorizonsError(f"Ephemerides shape mismatch: o={o.shape}, s={s.shape}")
+
+        if not normalize:
+            return s, o
+
+        o_norm = np.linalg.norm(o, axis=1, keepdims=True)
+        s_norm = np.linalg.norm(s, axis=1, keepdims=True)
+
+        o_norm = np.where(o_norm > 0.0, o_norm, 1.0)
+        s_norm = np.where(s_norm > 0.0, s_norm, 1.0)
+
+        o_unit = o / o_norm
+        s_unit = s / s_norm
+
+        return s_unit, o_unit
+
 
     def light_curve(self, n=100):
         s = self.s if hasattr(self, "s") else np.array(self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0))
