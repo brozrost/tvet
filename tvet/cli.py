@@ -34,13 +34,16 @@ def main():
     parser.add_argument('--shininess', default=100, help="Shininess factor for the asteroid surface")
     parser.add_argument('--wireframe-width', default=1, help="Width of the wireframe lines")
 
+    parser.add_argument("-v", "--verbose", action="store_true", help="Print summaries and small previews to stdout")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Suppress all stdout output (files are still saved)")
+    
     args = parser.parse_args()
 
     asteroid = Asteroid(args=args, filename=args.filename)
     asteroid.s = args.s
     asteroid.o = args.o
 
-    output_dir = "output"
+    output_dir = "out"
     os.makedirs(output_dir, exist_ok=True)
 
     output_flags = [
@@ -53,44 +56,66 @@ def main():
 
     if args.geometry:
         asteroid.get_geometry()
+
         np.savetxt(os.path.join(output_dir, "centers.txt"), asteroid.centers)
         np.savetxt(os.path.join(output_dir, "normals.txt"), asteroid.normals)
-        print("Centers:\n", asteroid.centers)
-        print(f"SAVED CENTERS TO {output_dir}/centers.txt\n")
-        print("Normals:\n", asteroid.normals)
-        print(f"SAVED NORMALS TO {output_dir}/normals.txt\n")
-        print("Number of centers:", len(asteroid.centers))
-        print("Number of normals:", len(asteroid.normals))
+
+        if not args.quiet:
+            print(f"\nSaved centers to {output_dir}/centers.txt")
+            print(f"Saved normals to {output_dir}/normals.txt\n")
+
+            if args.verbose:
+                print("Centers:", len(asteroid.centers))
+                print("Normals:", len(asteroid.normals))
+
+                print("\nCenters:\n", asteroid.centers[:3])
+                print("\nNormals:\n", asteroid.normals[:3], "\n")
 
     if args.cosines:
         asteroid.get_cosines(s=args.s, o=args.o)
+
         np.savetxt(os.path.join(output_dir, "mu_i.txt"), asteroid.mu_i)
         np.savetxt(os.path.join(output_dir, "mu_e.txt"), asteroid.mu_e)
-        print("mu_i:\n", asteroid.mu_i)
-        print(f"SAVED mu_i TO {output_dir}/mu_i.txt\n")
-        print("mu_e:\n", asteroid.mu_e)
-        print(f"SAVED mu_e TO {output_dir}/mu_e.txt\n")
-        print("Length of mu_i:", len(asteroid.mu_i))
-        print("Length of mu_e:", len(asteroid.mu_e))
+
+        if not args.quiet:
+            print(f"\nSaved mu_i to {output_dir}/mu_i.txt")
+            print(f"Saved mu_e to {output_dir}/mu_e.txt\n")
+
+            if args.verbose:
+                print("Length of mu_i:", len(asteroid.mu_i))
+                print("Length of mu_e:", len(asteroid.mu_e))
+
+                print("\nmu_i:\n", asteroid.mu_i[:3])
+                print("mu_e:\n", asteroid.mu_e[:3], "\n")
         
     if args.fluxes:
         asteroid.get_fluxes()
+
         np.savetxt(os.path.join(output_dir, "phi_i.txt"), asteroid.phi_i)
         np.savetxt(os.path.join(output_dir, "phi_e.txt"), asteroid.phi_e)
         np.savetxt(os.path.join(output_dir, "total_flux.txt"), np.array([asteroid.total]))
-        print("phi_i:\n", asteroid.phi_i)
-        print(f"SAVED phi_i TO {output_dir}/phi_i.txt\n")
-        print("phi_e:\n", asteroid.phi_e)
-        print(f"SAVED phi_e TO {output_dir}/phi_e.txt\n")
-        print("Length of phi_i:", len(asteroid.phi_i))
-        print("Length of phi_e:", len(asteroid.phi_e))
-        print("\nTotal flux:", asteroid.total)
-        print(f"SAVED TOTAL FLUX TO {output_dir}/total_flux.txt\n")
+
+        if not args.quiet:
+            print(f"\nSaved phi_i to {output_dir}/phi_i.txt")
+            print(f"Saved phi_e to {output_dir}/phi_e.txt")
+            print(f"Saved total flux to {output_dir}/total_flux.txt\n")
+
+            if args.verbose:
+                print("Length of phi_i:", len(asteroid.phi_i))
+                print("Length of phi_e:", len(asteroid.phi_e))
+
+                print("\nphi_i:\n", asteroid.phi_i[:3])
+                print("phi_e:\n", asteroid.phi_e[:3])
+                print("\nTotal flux:", asteroid.total, "\n")
+        
 
     if args.light_curve:
         curve_points = asteroid.light_curve()
+
         np.savetxt(os.path.join(output_dir, "light_curve.txt"), curve_points)
-        print(f"SAVED LIGHT CURVE TO {output_dir}/light_curve.txt\n")
+
+        if not args.quiet:
+            print(f"\nSaved light curve to {output_dir}/light_curve.txt\n")
 
     if args.plot_light_curve:
         curve_points = asteroid.light_curve()
