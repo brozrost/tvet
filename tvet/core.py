@@ -122,6 +122,7 @@ class Asteroid(object):
         self.total = np.sum(self.phi_e)
 
     def get_ephems(
+        self,
         *,
         body: str,
         start_time: str,
