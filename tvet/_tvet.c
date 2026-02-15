@@ -2,7 +2,7 @@
 $(python3-config --includes) \
 $(python3-config --embed --ldflags) \
 _tvet.c \
-c/vector_math.c c/intersect_AB_t.c c/bounding_box.c c/shadowing.c \
+csrc/vector_math.c csrc/intersect_AB_t.c csrc/bounding_box.c csrc/shadowing.c \
 -o _tvet$(python3-config --extension-suffix)
 
 #include <Python.h>
