@@ -22,6 +22,17 @@ class Asteroid(object):
 
         self._geometry_ready = False
 
+        self.faces_C = None
+        self.vertices_C = None
+        self.normals_C = None
+        self.centers_C = None
+
+        self.nof_faces = 0
+        self.nof_nodes = 0
+
+        self.nu_i_C = None
+        self.nu_e_C = None
+
         # Select scattering function based on CLI argument
         if self.args and hasattr(self.args, "scattering"):
             if self.args.scattering == "lambert":
@@ -59,53 +70,48 @@ class Asteroid(object):
         self.centers = np.array(self.centers)
         self.normals = np.array(self.normals)
 
+        self.faces_C = np.ascontiguousarray(self.faces, dtype=np.intc)
+        self.vertices_C = np.ascontiguousarray(self.vertices, dtype=np.double)
+        self.centers_C = np.ascontiguousarray(self.centers, dtype=np.double)
+        self.normals_C = np.ascontiguousarray(self.normals, dtype=np.double)
+
+        self.nof_faces = int(self.faces_C.shape[0])
+        self.nof_nodes = int(self.vertices_C.shape[0])
+
         self._geometry_ready = True
 
     def get_cosines(self, s=(1, 0, 0), o=(0, 0, 1)):
         self.get_geometry()
 
-        self.s = np.array(s)
-        self.o = np.array(o)
-        self.alpha = np.arccos(np.dot(s, o))
+        self.s = np.asarray(s, dtype=np.double)
+        self.o = np.asarray(o, dtype=np.double)
 
-        mu_i = []
-        mu_e = []
+        d = np.dot(self.s, self.o)
+        d = np.clip(d, -1.0, 1.0)
+        self.alpha = np.arccos(d)
 
-        for normal in self.normals:
-            mu_i.append(np.dot(s, normal))
-            mu_e.append(np.dot(o, normal))
+        self.mu_i = self.normals @ self.s
+        self.mu_e = self.normals @ self.o
 
-        self.mu_i = np.array(mu_i)
-        self.mu_e = np.array(mu_e)
+        self.mu_i = np.maximum(self.mu_i, 0.0)
+        self.mu_e = np.maximum(self.mu_e, 0.0)
 
-        self.mu_i = np.where(self.mu_i > 0.0, self.mu_i, 0.0)
-        self.mu_e = np.where(self.mu_e > 0.0, self.mu_e, 0.0)
+        mu_i_C = np.asarray(self.mu_i, dtype=np.double, order="C")
+        mu_e_C = np.asarray(self.mu_e, dtype=np.double, order="C")
 
-        self.nu_i = np.zeros((len(self.faces)))
-        self.nu_e = np.zeros((len(self.faces)))
+        if self.nu_i_C is None or self.nu_i_C.shape[0] != self.nof_faces:
+            self.nu_i_C = np.empty(self.nof_faces, dtype=np.double)
+            self.nu_e_C = np.empty(self.nof_faces, dtype=np.double)
 
-        mu_i_C = np.ascontiguousarray(self.mu_i, dtype=np.double)
-        mu_e_C = np.ascontiguousarray(self.mu_e, dtype=np.double)
-        nu_i_C = np.ascontiguousarray(self.nu_i, dtype=np.double)
-        nu_e_C = np.ascontiguousarray(self.nu_e, dtype=np.double)
+        self.nu_i_C.fill(0.0)
+        self.nu_e_C.fill(0.0)
 
-        faces_C = np.ascontiguousarray(self.faces, dtype=np.intc)
-        vertices_C = np.ascontiguousarray(self.vertices, dtype=np.double)
-        normals_C = np.ascontiguousarray(self.normals, dtype=np.double)
-        centers_C = np.ascontiguousarray(self.centers, dtype=np.double)
+        _tvet.non(mu_i_C, mu_e_C, self.nof_faces, self.nu_i_C, self.nu_e_C)
+        _tvet.nu(self.faces_C, self.nof_faces, self.vertices_C, self.nof_nodes, self.normals_C, self.centers_C, self.s, self.nu_i_C)
+        _tvet.nu(self.faces_C, self.nof_faces, self.vertices_C, self.nof_nodes, self.normals_C, self.centers_C, self.o, self.nu_e_C)
 
-        s_C = np.ascontiguousarray(self.s, dtype=np.double)
-        o_C = np.ascontiguousarray(self.o, dtype=np.double)
-
-        nof_faces = len(self.faces)
-        nof_nodes = len(self.vertices)
-
-        _tvet.non(mu_i_C, mu_e_C, nof_faces, nu_i_C, nu_e_C)
-        _tvet.nu(faces_C, nof_faces, vertices_C, nof_nodes, normals_C, centers_C, s_C, nu_i_C)
-        _tvet.nu(faces_C, nof_faces, vertices_C, nof_nodes, normals_C, centers_C, o_C, nu_e_C)
-
-        self.nu_i = nu_i_C
-        self.nu_e = nu_e_C
+        self.nu_i = self.nu_i_C
+        self.nu_e = self.nu_e_C
 
     def get_fluxes(self, s=None, o=None):
         s = s if s is not None else (self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0))
@@ -157,8 +163,8 @@ class Asteroid(object):
             timeout=timeout
         )
 
-        o = np.asarray(o_xyz, dtype=np.float64)
-        s = np.asarray(s_xyz, dtype=np.float64)
+        o = np.asarray(o_xyz, dtype=np.double)
+        s = np.asarray(s_xyz, dtype=np.double)
 
         if o.shape != s.shape:
             raise ephems.HorizonsError(f"Ephemerides shape mismatch: o={o.shape}, s={s.shape}")
