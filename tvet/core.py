@@ -20,6 +20,8 @@ class Asteroid(object):
         self.size = np.max(self.vertices) - np.min(self.vertices)
         self.vertices *= 1.9 / self.size
 
+        self._geometry_ready = False
+
         # Select scattering function based on CLI argument
         if self.args and hasattr(self.args, "scattering"):
             if self.args.scattering == "lambert":
@@ -34,6 +36,9 @@ class Asteroid(object):
             self.f_func = scattering.f_lambert
 
     def get_geometry(self):
+        if getattr(self, "_geometry_ready", False):
+            return
+
         self.centers = []
         self.normals = []
 
@@ -53,6 +58,8 @@ class Asteroid(object):
 
         self.centers = np.array(self.centers)
         self.normals = np.array(self.normals)
+
+        self._geometry_ready = True
 
     def get_cosines(self, s=(1, 0, 0), o=(0, 0, 1)):
         self.get_geometry()
@@ -101,7 +108,6 @@ class Asteroid(object):
         self.nu_e = nu_e_C
 
     def get_fluxes(self, s=None, o=None):
-        self.get_geometry()
         s = s if s is not None else (self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0))
         o = o if o is not None else (self.args.o if self.args and hasattr(self.args, "o") else (0, 0, 1))
         self.get_cosines(s=s, o=o)
