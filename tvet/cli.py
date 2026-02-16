@@ -79,8 +79,8 @@ def main():
                 print(f"Saved normals to {out_dir}/normals.txt\n")
 
             if args.verbose > 0:
-                print(f"Centers:\n {asteroid.centers[:args.verbose]} ...\n")
-                print(f"Normals:\n {asteroid.normals[:args.verbose]} ...\n")
+                print(f"Centers: (first {args.verbose})\n {asteroid.centers[:args.verbose]}\n")
+                print(f"Normals: (first {args.verbose})\n {asteroid.normals[:args.verbose]}\n")
 
     if args.cosines:
         asteroid.get_cosines(s=args.s, o=args.o)
@@ -97,8 +97,8 @@ def main():
                 print(f"Saved mu_e to {out_dir}/mu_e.txt\n")
 
             if args.verbose > 0:
-                print(f"mu_i:\n {asteroid.mu_i[:args.verbose]} ...\n")
-                print(f"mu_e:\n {asteroid.mu_e[:args.verbose]} ...\n")
+                print(f"mu_i: (first {args.verbose})\n {asteroid.mu_i[:args.verbose]}\n")
+                print(f"mu_e: (first {args.verbose})\n {asteroid.mu_e[:args.verbose]}\n")
         
     if args.fluxes:
         asteroid.get_fluxes()
@@ -118,8 +118,8 @@ def main():
                 print(f"Saved total flux to {out_dir}/total_flux.txt\n")
 
             if args.verbose > 0:
-                print(f"phi_i:\n {asteroid.phi_i[:args.verbose]} ...\n")
-                print(f"phi_e:\n {asteroid.phi_e[:args.verbose]} ...\n")
+                print(f"phi_i: (first {args.verbose})\n {asteroid.phi_i[:args.verbose]}\n")
+                print(f"phi_e: (first {args.verbose})\n {asteroid.phi_e[:args.verbose]}\n")
         
 
     if args.light_curve:
@@ -135,7 +135,7 @@ def main():
                 print(f"Saved light curve to {out_dir}/light_curve.txt\n")
 
             if args.verbose > 0:
-                print(f"Curve points:\n{curve_points[:args.verbose]} ...\n")
+                print(f"Curve points: (first {args.verbose})\n {curve_points[:args.verbose]}\n")
 
     if args.plot_light_curve:
         curve_points = asteroid.light_curve()
