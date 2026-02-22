@@ -11,16 +11,25 @@ from .io import load_obj
 from . import ephemerides as ephems
 from . import _tvet
 
-class Asteroid(object):
+class Asteroid:
     def __init__(self, args=None, filename=None):
         self.args = args
         self.filename = filename
 
-        self.vertices, self.faces = load_obj(self.filename)
-        self.size = np.max(self.vertices) - np.min(self.vertices)
-        self.vertices *= 1.9 / self.size
+        if self.filename is not None:
+            self.vertices, self.faces = load_obj(self.filename)
+            self.size = np.max(self.vertices) - np.min(self.vertices)
+            self.vertices *= 1.9 / self.size
+        else:
+            self.vertices = None
+            self.size = None
+            self.faces = None
 
-        self._geometry_ready = False
+        self.s = np.array([1.0, 0.0, 0.0], dtype=np.double)
+        self.o = np.array([0.0, 0.0, 1.0], dtype=np.double)
+
+        self.s_array = None
+        self.o_array = None
 
         self.faces_C = None
         self.vertices_C = None
@@ -32,6 +41,9 @@ class Asteroid(object):
 
         self.nu_i_C = None
         self.nu_e_C = None
+
+        # Guard against recomputing geometry
+        self._geometry_ready = False
 
         # Select scattering function based on CLI argument
         if self.args and hasattr(self.args, "scattering"):
@@ -47,6 +59,9 @@ class Asteroid(object):
             self.f_func = scattering.f_lambert
 
     def get_geometry(self):
+        if self.vertices is None or self.faces is None:
+            raise ValueError("Geometry not available: no OBJ mesh loaded.")
+
         if getattr(self, "_geometry_ready", False):
             return
 
@@ -80,18 +95,24 @@ class Asteroid(object):
 
         self._geometry_ready = True
 
-    def get_cosines(self, s=(1, 0, 0), o=(0, 0, 1)):
+    def get_cosines(self, s=None, o=None):
         self.get_geometry()
 
-        self.s = np.asarray(s, dtype=np.double)
-        self.o = np.asarray(o, dtype=np.double)
+        if s is None: 
+            s = self.s
+        if o is None: 
+            o = self.o
 
-        d = np.dot(self.s, self.o)
+        # Ensure the right type
+        s = np.asarray(s, dtype=np.double)
+        o = np.asarray(o, dtype=np.double)
+
+        d = np.dot(s, o)
         d = np.clip(d, -1.0, 1.0)
         self.alpha = np.arccos(d)
 
-        self.mu_i = self.normals @ self.s
-        self.mu_e = self.normals @ self.o
+        self.mu_i = self.normals @ s
+        self.mu_e = self.normals @ o
 
         self.mu_i = np.maximum(self.mu_i, 0.0)
         self.mu_e = np.maximum(self.mu_e, 0.0)
@@ -107,15 +128,18 @@ class Asteroid(object):
         self.nu_e_C.fill(0.0)
 
         _tvet.non(mu_i_C, mu_e_C, self.nof_faces, self.nu_i_C, self.nu_e_C)
-        _tvet.nu(self.faces_C, self.nof_faces, self.vertices_C, self.nof_nodes, self.normals_C, self.centers_C, self.s, self.nu_i_C)
-        _tvet.nu(self.faces_C, self.nof_faces, self.vertices_C, self.nof_nodes, self.normals_C, self.centers_C, self.o, self.nu_e_C)
+        _tvet.nu(self.faces_C, self.nof_faces, self.vertices_C, self.nof_nodes, self.normals_C, self.centers_C, s, self.nu_i_C)
+        _tvet.nu(self.faces_C, self.nof_faces, self.vertices_C, self.nof_nodes, self.normals_C, self.centers_C, o, self.nu_e_C)
 
         self.nu_i = self.nu_i_C
         self.nu_e = self.nu_e_C
 
     def get_fluxes(self, s=None, o=None):
-        s = s if s is not None else (self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0))
-        o = o if o is not None else (self.args.o if self.args and hasattr(self.args, "o") else (0, 0, 1))
+        if s is None: 
+            s = self.s
+        if o is None: 
+            o = self.o
+
         self.get_cosines(s=s, o=o)
 
         phi_s = 1361. # W/m^2
@@ -183,43 +207,50 @@ class Asteroid(object):
 
         return s_unit, o_unit
 
+    def get_light_curve(self, s=None, o=None, n=100):
+        if s is None: 
+            s = self.s
+        if o is None: 
+            o = self.o
+        if self.s_array is not None: 
+            n = int(self.s_array.shape[0])
 
-    def light_curve(self, n=100):
-        s = self.s if hasattr(self, "s") else np.array(self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0))
         x, y, z = s
         total = []
 
-        for i in range(n+1):
-            gamma = 0 + 2.0*np.pi * i/n
+        for i in range(n):
+            if self.s_array is not None:
+                x, y, z = self.s_array[i]
+                print(i, " ", x,y,z)
+
+            gamma = 2.0 * np.pi * i / n
 
             x_ = x * np.cos(gamma) + y * np.sin(gamma)
             y_ = -x * np.sin(gamma) + y * np.cos(gamma)
             z_ = z
 
-            s_ = np.array([x_, y_, z_])
+            s_ = np.array([x_, y_, z_], dtype=np.double)
 
-            self.get_fluxes(s=s_, o=self.o if hasattr(self, "o") else None)
+            self.get_fluxes(s=s_, o=o)
             total.append((gamma, self.total))
 
         total = np.array(total)
 
         # Normalize
-        total[:, 0] = (total[:, 0] - np.min(total[:, 0])) / (np.max(total[:, 0]) - np.min(total[:, 0]))
+        denx = np.max(total[:, 0]) - np.min(total[:, 0])
+        total[:, 0] = (total[:, 0] - np.min(total[:, 0])) / denx if denx > 0 else 0.0
 
-        den = np.max(total[:, 1]) - np.min(total[:, 1])
-        if den > 0.0:
-            total[:, 1] = -(total[:, 1] - np.min(total[:, 1])) / den
-        else:
-            total[:, 1] = 0.0
+        deny = np.max(total[:, 1]) - np.min(total[:, 1])
+        total[:, 1] = -(total[:, 1] - np.min(total[:, 1])) / deny if deny > 0 else 0.0
 
         return total
 
     def plot_light_curve(self, curve_points):
         if curve_points is None:
-            curve_points = self.light_curve()
+            curve_points = self.get_light_curve()
 
         plt.figure(figsize=(8, 4))
-        plt.plot(curve_points[:, 0], curve_points[:, 1], color='blue')
+        plt.plot(curve_points[:, 0], curve_points[:, 1], marker='+', color='red')
         plt.xlabel('Normalized phase angle')
         plt.ylabel('Normalized flux')
         plt.title('Asteroid Light Curve')
@@ -228,7 +259,7 @@ class Asteroid(object):
         plt.show()
 
     def interactive_plot_light_curve(self):
-        curve_points = self.light_curve()
+        curve_points = self.get_light_curve()
 
         light_curve = vispy.scene.visuals.Line(pos=(curve_points*200) + (40, 560), color='white', parent=self.canvas.scene)
         vispy.scene.visuals.Line(pos=((20, 570), (250, 570)), color='white', parent=self.canvas.scene)
@@ -237,9 +268,7 @@ class Asteroid(object):
     def interactive_plot(self):
         # Call geometry and flux setup with CLI vectors
         self.get_geometry()
-        s = self.args.s if self.args and hasattr(self.args, "s") else (1, 0, 0)
-        o = self.args.o if self.args and hasattr(self.args, "o") else (0, 0, 1)
-        self.get_cosines(s=s, o=o)
+        self.get_cosines()
         self.get_fluxes()
 
         # Provide defaults if args is None
@@ -265,8 +294,8 @@ class Asteroid(object):
         # text = vispy.scene.visuals.Text(str(i), pos=self.centers[i], font_size=10, color='white')
         # self.view.add(text)
 
-        s = vispy.scene.visuals.Line(pos=np.array([(0, 0.02, 0), self.s+ (0, 0.02, 0)]), color='yellow', parent=self.view.scene)
-        o = vispy.scene.visuals.Line(pos=np.array([(0, 0.02, 0), self.o + (0, 0.02, 0)]), color='magenta', parent=self.view.scene)
+        s_line = vispy.scene.visuals.Line(pos=np.array([(0, 0.02, 0), self.s+ (0, 0.02, 0)]), color='yellow', parent=self.view.scene)
+        o_line = vispy.scene.visuals.Line(pos=np.array([(0, 0.02, 0), self.o + (0, 0.02, 0)]), color='magenta', parent=self.view.scene)
         
         vispy.scene.visuals.Text("'1' to show phi_i", anchor_x='left', pos=(20, 20), font_size=10,
                             color='white', parent=self.canvas.scene)
@@ -349,7 +378,7 @@ class Asteroid(object):
                 vispy.app.quit()
 
             elif event.key == 's':
-                vispy.io.write_png("output/vispy_screenshot.png", vispy.gloo.util._screenshot())
+                vispy.io.write_png("out/vispy_screenshot.png", vispy.gloo.util._screenshot())
 
             elif event.key == '1':
                 plot_fluxes(phi=self.phi_i)
@@ -417,7 +446,7 @@ class Asteroid(object):
                 self.get_fluxes()
 
             elif event.key == 'l':
-                curve_points = self.light_curve()
+                curve_points = self.get_light_curve()
                 self.plot_light_curve(curve_points)
 
         self.canvas.show()
