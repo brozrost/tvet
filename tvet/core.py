@@ -31,6 +31,15 @@ class Asteroid:
         self.s_array = None
         self.o_array = None
 
+        self.start = 0
+        self.stop = 0
+
+        self.period = 1
+        self.epoch = 0.0
+        self.l = 0.0
+        self.b = np.pi / 2
+        self.phi0 = 0.0
+
         self.faces_C = None
         self.vertices_C = None
         self.normals_C = None
@@ -206,33 +215,69 @@ class Asteroid:
         s_unit = s / s_norm
 
         return s_unit, o_unit
+    
+    def rotate_y(self, a, phi):
+        x, y, z = a
 
-    def get_light_curve(self, s=None, o=None, n=100):
+        x_ = x * np.cos(phi) + z * np.sin(phi)
+        y_ = y
+        z_ = - x * np.sin(phi) + z * np.cos(phi)
+
+        a_ = np.array([x_, y_, z_], dtype=np.double)
+
+        return a_
+
+    def rotate_z(self, a, phi):
+        x, y, z = a
+
+        x_ = x * np.cos(phi) - y * np.sin(phi)
+        y_ = x * np.sin(phi) + y * np.cos(phi)
+        z_ = z
+
+        a_ = np.array([x_, y_, z_], dtype=np.double)
+
+        return a_
+    
+    #def get_light_curve:
+
+
+    def get_light_curve(self, s=None, o=None, n=100, start=None, period=None, epoch=None, l=None, b=None, phi0=None):
         if s is None: 
             s = self.s
         if o is None: 
             o = self.o
-        if self.s_array is not None: 
-            n = int(self.s_array.shape[0])
+        if start is None:
+            start = self.start
+        if period is None:
+            period = self.period
+        if epoch is None:
+            epoch = self.epoch
+        if l is None:
+            l = self.l
+        if b is None:
+            b = self.b
+        if phi0 is None:
+            phi0 = self.phi0
 
-        x, y, z = s
+        phi2 = np.pi / 2.0 - b
+        phi3 = l
+        
         total = []
 
         for i in range(n):
-            if self.s_array is not None:
-                x, y, z = self.s_array[i]
-                print(i, " ", x,y,z)
+            t = start + period * i/n
+            phi1 = 2.0 * np.pi * (t - epoch) / period + phi0
 
-            gamma = 2.0 * np.pi * i / n
+            s_ = self.rotate_z(s, phi1)
+            s_ = self.rotate_y(s_, phi2)
+            s_ = self.rotate_z(s_, phi3)
 
-            x_ = x * np.cos(gamma) + y * np.sin(gamma)
-            y_ = -x * np.sin(gamma) + y * np.cos(gamma)
-            z_ = z
+            o_ = self.rotate_z(o, phi1)
+            o_ = self.rotate_y(o_, phi2)
+            o_ = self.rotate_z(o_, phi3)
 
-            s_ = np.array([x_, y_, z_], dtype=np.double)
-
-            self.get_fluxes(s=s_, o=o)
-            total.append((gamma, self.total))
+            self.get_fluxes(s=s_, o=o_)
+            total.append((t, self.total))
 
         total = np.array(total)
 
