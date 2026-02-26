@@ -9,6 +9,7 @@ import vispy.gloo
 from . import scattering
 from .io import load_obj
 from . import horizons
+from . import damit
 from . import _tvet
 
 class Asteroid:
@@ -17,6 +18,7 @@ class Asteroid:
         self.filename = filename
 
         self.horizons = horizons.HorizonsClient()
+        self.damit = damit.DamitClient()
 
         if self.filename is not None:
             self.vertices, self.faces = load_obj(self.filename)
