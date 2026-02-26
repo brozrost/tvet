@@ -44,11 +44,11 @@ def fetch_spin(*, model_id: int | str, timeout: float = 30.0):
     if not lines:
         raise DamitError(f"spin.txt is empty or comment-only for model_id={model_id}")
     
-    lam, b, l = map(float, lines[0].split())
+    l, b, period = map(float, lines[0].split())
     epoch, phi0 = map(float, lines[1].split())
-    period = float(lines[2].split()[0])
+    scat = float(lines[2].split()[0])
 
-    return lam, b, l, epoch, phi0, period
+    return l, b, period, epoch, phi0, scat
 
 def main():
     model_id = 103
