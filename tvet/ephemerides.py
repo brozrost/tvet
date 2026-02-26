@@ -86,7 +86,7 @@ def fetch_ephems(
 
     return xyz
 
-if __name__ == "__main__":
+def main():
     o_xyz = fetch_ephems(
         body="499",
         center="500@399",
@@ -105,3 +105,6 @@ if __name__ == "__main__":
 
     print("o[0] XYZ (km):", o_xyz[0])
     print("s[0] XYZ (km):", s_xyz[0])
+
+if __name__ == "__main__":
+    main()
