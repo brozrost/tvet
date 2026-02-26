@@ -95,8 +95,12 @@ class HorizonsClient:
     def normalize_vectors(self, vectors: np.ndarray) -> np.ndarray:
         vectors = np.asarray(vectors, dtype=np.double)
 
+        if vectors.ndim == 1 and vectors.shape[0] == 3:
+            n = np.linalg.norm(vectors)
+            return vectors / (n if n > 0.0 else 1.0)
+
         if vectors.ndim != 2 or vectors.shape[1] != 3:
-            raise ValueError(f"Expected shape (N,3), got {vectors.shape}")
+            raise ValueError(f"Expected shape (N,3) or (3,), got {vectors.shape}")
         
         norms = np.linalg.norm(vectors, axis=1, keepdims=True)
         norms = np.where(norms > 0.0, norms, 1.0)
