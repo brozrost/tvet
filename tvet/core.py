@@ -8,13 +8,15 @@ import vispy.gloo
 
 from . import scattering
 from .io import load_obj
-from . import ephemerides as ephems
+from . import horizons
 from . import _tvet
 
 class Asteroid:
     def __init__(self, args=None, filename=None):
         self.args = args
         self.filename = filename
+
+        self.horizons = horizons.HorizonsClient()
 
         if self.filename is not None:
             self.vertices, self.faces = load_obj(self.filename)
@@ -178,43 +180,16 @@ class Asteroid:
         normalize: bool = True,
         timeout: float = 30.0
     ):
-        o_xyz = ephems.fetch_ephems(
+        return self.horizons.fetch_so(
             body=body,
-            center=observer_center,
             start_time=start_time,
             stop_time=stop_time,
             step_size=step_size,
+            observer_center=observer_center,
+            sun_center=sun_center,
+            normalize=normalize,
             timeout=timeout
         )
-
-        s_xyz = ephems.fetch_ephems(
-            body=body,
-            center=sun_center,
-            start_time=start_time,
-            stop_time=stop_time,
-            step_size=step_size,
-            timeout=timeout
-        )
-
-        o = np.asarray(o_xyz, dtype=np.double)
-        s = np.asarray(s_xyz, dtype=np.double)
-
-        if o.shape != s.shape:
-            raise ephems.HorizonsError(f"Ephemerides shape mismatch: o={o.shape}, s={s.shape}")
-
-        if not normalize:
-            return s, o
-
-        o_norm = np.linalg.norm(o, axis=1, keepdims=True)
-        s_norm = np.linalg.norm(s, axis=1, keepdims=True)
-
-        o_norm = np.where(o_norm > 0.0, o_norm, 1.0)
-        s_norm = np.where(s_norm > 0.0, s_norm, 1.0)
-
-        o_unit = o / o_norm
-        s_unit = s / s_norm
-
-        return s_unit, o_unit
     
     def rotate_y(self, a, phi):
         x, y, z = a
