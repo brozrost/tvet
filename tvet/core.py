@@ -6,8 +6,8 @@ import vispy.visuals
 import vispy.io
 import vispy.gloo
 
+from . import shapemodel
 from . import scattering
-from .io import load_obj
 from . import horizons
 from . import damit
 from . import lightcurve
@@ -18,44 +18,14 @@ class Asteroid:
         self.args = args
         self.filename = filename
 
-        if self.filename is not None:
-            self.vertices, self.faces = load_obj(self.filename)
-            self.size = np.max(self.vertices) - np.min(self.vertices)
-            self.vertices *= 1.9 / self.size
-        else:
-            self.vertices = None
-            self.size = None
-            self.faces = None
-
         self.s = np.array([1.0, 0.0, 0.0], dtype=np.double)
         self.o = np.array([0.0, 0.0, 1.0], dtype=np.double)
 
         self.s_array = None
         self.o_array = None
 
-        self.start = 0
-        self.stop = None
-        self.step = None
-
-        self.period = 1
-        self.epoch = 0.0
-        self.l = 0.0
-        self.b = np.pi / 2
-        self.phi0 = 0.0
-
-        self.faces_C = None
-        self.vertices_C = None
-        self.normals_C = None
-        self.centers_C = None
-
-        self.nof_faces = 0
-        self.nof_nodes = 0
-
         self.nu_i_C = None
         self.nu_e_C = None
-
-        # Guard against recomputing geometry
-        self._geometry_ready = False
 
         # Select scattering function based on CLI argument
         if self.args and hasattr(self.args, "scattering"):
@@ -70,56 +40,26 @@ class Asteroid:
         else:
             self.f_func = scattering.f_lambert
 
+        self.shape = shapemodel.ShapeModel()
+        if self.filename is not None:
+            self.shape.load_obj(self.filename)
         self.horizons = horizons.HorizonsClient()
         self.damit = damit.DamitClient()
-        self.lightcurve = lightcurve.LightCurve(self)
+        self.light_curve = lightcurve.LightCurve(self)
 
     def get_geometry(self):
-        if self.vertices is None or self.faces is None:
-            raise ValueError("Geometry not available: no OBJ mesh loaded.")
-
-        if getattr(self, "_geometry_ready", False):
-            return
-
-        self.centers = []
-        self.normals = []
-
-        for face in self.faces:
-            A = self.vertices[face[0]]
-            B = self.vertices[face[1]]
-            C = self.vertices[face[2]]
-
-            T = 1/3 * (A + B + C)
-            a = B - C
-            b = C - A
-            n = np.cross(a, b)
-            n /= np.sqrt(np.dot(n, n))
-
-            self.centers.append(T)
-            self.normals.append(n)
-
-        self.centers = np.array(self.centers)
-        self.normals = np.array(self.normals)
-
-        self.faces_C = np.ascontiguousarray(self.faces, dtype=np.intc)
-        self.vertices_C = np.ascontiguousarray(self.vertices, dtype=np.double)
-        self.centers_C = np.ascontiguousarray(self.centers, dtype=np.double)
-        self.normals_C = np.ascontiguousarray(self.normals, dtype=np.double)
-
-        self.nof_faces = int(self.faces_C.shape[0])
-        self.nof_nodes = int(self.vertices_C.shape[0])
-
-        self._geometry_ready = True
+        if self.shape.vertices is None or self.shape.faces is None:
+            raise ValueError("Geometry not available: no mesh loaded.")
+        self.shape.compute_geometry()
 
     def get_cosines(self, s=None, o=None):
-        self.get_geometry()
+        self.shape.compute_geometry()
 
         if s is None: 
             s = self.s
         if o is None: 
             o = self.o
 
-        # Ensure the right type
         s = np.asarray(s, dtype=np.double)
         o = np.asarray(o, dtype=np.double)
 
@@ -127,8 +67,8 @@ class Asteroid:
         d = np.clip(d, -1.0, 1.0)
         self.alpha = np.arccos(d)
 
-        self.mu_i = self.normals @ s
-        self.mu_e = self.normals @ o
+        self.mu_i = self.shape.normals @ s
+        self.mu_e = self.shape.normals @ o
 
         self.mu_i = np.maximum(self.mu_i, 0.0)
         self.mu_e = np.maximum(self.mu_e, 0.0)
@@ -136,16 +76,28 @@ class Asteroid:
         mu_i_C = np.asarray(self.mu_i, dtype=np.double, order="C")
         mu_e_C = np.asarray(self.mu_e, dtype=np.double, order="C")
 
-        if self.nu_i_C is None or self.nu_i_C.shape[0] != self.nof_faces:
-            self.nu_i_C = np.empty(self.nof_faces, dtype=np.double)
-            self.nu_e_C = np.empty(self.nof_faces, dtype=np.double)
+        if self.nu_i_C is None or self.nu_i_C.shape[0] != self.shape.nof_faces:
+            self.nu_i_C = np.empty(self.shape.nof_faces, dtype=np.double)
+            self.nu_e_C = np.empty(self.shape.nof_faces, dtype=np.double)
 
         self.nu_i_C.fill(0.0)
         self.nu_e_C.fill(0.0)
 
-        _tvet.non(mu_i_C, mu_e_C, self.nof_faces, self.nu_i_C, self.nu_e_C)
-        _tvet.nu(self.faces_C, self.nof_faces, self.vertices_C, self.nof_nodes, self.normals_C, self.centers_C, s, self.nu_i_C)
-        _tvet.nu(self.faces_C, self.nof_faces, self.vertices_C, self.nof_nodes, self.normals_C, self.centers_C, o, self.nu_e_C)
+        _tvet.non(mu_i_C, mu_e_C, self.shape.nof_faces, self.nu_i_C, self.nu_e_C)
+
+        _tvet.nu(
+            self.shape.faces_C, self.shape.nof_faces, 
+            self.shape.vertices_C, self.shape.nof_nodes, 
+            self.shape.normals_C, self.shape.centers_C, 
+            s, self.nu_i_C
+        )
+
+        _tvet.nu(
+            self.shape.faces_C, self.shape.nof_faces, 
+            self.shape.vertices_C, self.shape.nof_nodes, 
+            self.shape.normals_C, self.shape.centers_C, 
+            o, self.nu_e_C
+        )
 
         self.nu_i = self.nu_i_C
         self.nu_e = self.nu_e_C
@@ -224,7 +176,7 @@ class Asteroid:
         pass
 
     def get_light_curve_for_period(self, s=None, o=None, n=100, start=None, period=None, epoch=None, l=None, b=None, phi0=None):
-        return self.lightcurve.compute_for_period(
+        return self.light_curve.compute_for_period(
             s=s,
             o=o,
             n=n,
@@ -238,7 +190,7 @@ class Asteroid:
 
     def plot_light_curve(self, curve_points):
         if curve_points is None:
-            curve_points = self.get_light_curve()
+            curve_points = self.get_light_curve_for_period()
 
         plt.figure(figsize=(8, 4))
         plt.plot(curve_points[:, 0], curve_points[:, 1], marker='+', color='red')
@@ -270,13 +222,13 @@ class Asteroid:
         self.canvas.size = 1920, 1080
         self.view = self.canvas.central_widget.add_view()
 
-        mesh = vispy.scene.visuals.Mesh(self.vertices, self.faces, color='gray')
+        mesh = vispy.scene.visuals.Mesh(self.shape.vertices, self.shape.faces, color='gray')
         mesh.transform = vispy.scene.transforms.MatrixTransform()
         self.view.add(mesh)
 
-        pos = np.array([self.centers, self.centers + 0.1 * self.normals])
+        pos = np.array([self.shape.centers, self.shape.centers + 0.1 * self.shape.normals])
         connect = []
-        n = len(self.centers)
+        n = len(self.shape.centers)
         for i in range(n):
             connect.append(np.array([i, n + i]))
 
@@ -314,11 +266,11 @@ class Asteroid:
         vispy.scene.visuals.Text("'q' to quit", anchor_x='left', pos=(20, 260), font_size=10,
                             color='white', parent=self.canvas.scene)
         
-        vispy.scene.visuals.Text("Number of vertices: %d" %(len(self.vertices)), anchor_x='left', pos=(20, 300), font_size=10,
+        vispy.scene.visuals.Text("Number of vertices: %d" %(len(self.shape.vertices)), anchor_x='left', pos=(20, 300), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("Number of faces: %d" %(len(self.faces)), anchor_x='left', pos=(20, 320), font_size=10,
+        vispy.scene.visuals.Text("Number of faces: %d" %(len(self.shape.faces)), anchor_x='left', pos=(20, 320), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("Asteroid size: %f" %(self.size), anchor_x='left', pos=(20, 340), font_size=10,
+        vispy.scene.visuals.Text("Asteroid size: %f" %(self.shape.size), anchor_x='left', pos=(20, 340), font_size=10,
                             color='white', parent=self.canvas.scene)
         
         vispy.scene.visuals.XYZAxis(parent=self.view.scene)
@@ -360,7 +312,7 @@ class Asteroid:
             face_colors = []
             for face in phi:
                 face_colors.append(face * color)
-            mesh.set_data(self.vertices, self.faces, face_colors=face_colors)
+            mesh.set_data(self.shape.vertices, self.shape.faces, face_colors=face_colors)
             mesh.update()
 
         @self.canvas.events.key_press.connect
@@ -393,9 +345,9 @@ class Asteroid:
                 wireframe_filter.faces_only = False
                 normals.visible = True
                 face_colors = []
-                for i in range(len(self.faces)):
+                for i in range(len(self.shape.faces)):
                     face_colors.append(np.array([0.6, 0.6, 0.6]))
-                mesh.set_data(self.vertices, self.faces, face_colors=face_colors)
+                mesh.set_data(self.shape.vertices, self.shape.faces, face_colors=face_colors)
                 mesh.update()
 
             elif event.key == '5':
@@ -403,9 +355,9 @@ class Asteroid:
                 wireframe_filter.enabled = False
                 normals.visible = False
                 face_colors = []
-                for i in range(len(self.faces)):
+                for i in range(len(self.shape.faces)):
                     face_colors.append(np.array([0.6, 0.6, 0.6]))
-                mesh.set_data(self.vertices, self.faces, face_colors=face_colors)
+                mesh.set_data(self.shape.vertices, self.shape.faces, face_colors=face_colors)
                 mesh.update()
 
             elif event.key == '6':
@@ -413,9 +365,9 @@ class Asteroid:
                 wireframe_filter.enabled = False
                 normals.visible = False
                 face_colors = []
-                for i in range(len(self.faces)):
+                for i in range(len(self.shape.faces)):
                     face_colors.append(np.array([0.6, 0.6, 0.6]))
-                mesh.set_data(self.vertices, self.faces, face_colors=face_colors)
+                mesh.set_data(self.shape.vertices, self.shape.faces, face_colors=face_colors)
                 mesh.update()
 
             elif event.key == 'a':

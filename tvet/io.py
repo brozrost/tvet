@@ -2,7 +2,7 @@
 
 import numpy as np
 
-def load_ele(filename, debug=False): 
+def load_ele_file(filename, debug=False): 
     '''Load an ELE file.'''
     
     ele = []
@@ -26,8 +26,8 @@ def load_ele(filename, debug=False):
 
     return ele
 
-def load_node(filename, debug=False): 
-    '''Load an NODE file.'''
+def load_node_file(filename, debug=False): 
+    '''Load a NODE file.'''
     
     node = []
 
@@ -50,8 +50,8 @@ def load_node(filename, debug=False):
 
     return node
 
-def load_face(filename, debug=False): 
-    '''Load an FACE file.'''
+def load_face_file(filename, debug=False): 
+    '''Load a FACE file.'''
 
     face = []
     
@@ -74,7 +74,7 @@ def load_face(filename, debug=False):
 
     return face
 
-def load_obj(filename, debug=False):
+def load_obj_file(filename, debug=False):
     '''Load a Wavefront OBJ file.''' 
     
     node = []
@@ -112,10 +112,10 @@ def check_filetype(filename):
                 return False
 
 def main():
-    ele = load_ele("src/sample_files/tri_file_octdecv_1.1.ele", True)
-    node = load_node("src/sample_files/tri_file_octdecv_1.1.node", True)
-    face = load_face("src/sample_files/tri_file_octdecv_1.1.face", True)
-    obj_node, obj_face = load_obj("src/sample_files/tri_file_octdecv_1.obj", True)
+    ele = load_ele_file("src/sample_files/tri_file_octdecv_1.1.ele", True)
+    node = load_node_file("src/sample_files/tri_file_octdecv_1.1.node", True)
+    face = load_face_file("src/sample_files/tri_file_octdecv_1.1.face", True)
+    obj_node, obj_face = load_obj_file("src/sample_files/tri_file_octdecv_1.obj", True)
 
 if __name__ == "__main__": 
     main()

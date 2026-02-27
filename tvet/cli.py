@@ -96,7 +96,7 @@ def main():
         os.makedirs(out_dir, exist_ok=True)
 
     if mode_jpl_only:
-        if not args.stop:
+        if not args.stop_time:
             pass
 
         asteroid = Asteroid(args=args, filename=None)
@@ -145,11 +145,11 @@ def main():
         if period <= 0.0:
             parser.error(f"--spin PERIOD must be > 0, got: {period}")
 
-        asteroid.period = float(period)
-        asteroid.epoch = float(epoch)
-        asteroid.l = float(l)
-        asteroid.b = float(b)
-        asteroid.phi0 = float(phi0)
+        asteroid.light_curve.period = float(period)
+        asteroid.light_curve.epoch = float(epoch)
+        asteroid.light_curve.l = float(l)
+        asteroid.light_curve.b = float(b)
+        asteroid.light_curve.phi0 = float(phi0)
 
     out_flags = [
         args.geometry,
@@ -160,11 +160,6 @@ def main():
     ]
 
     if has_jpl:
-        try:
-            body_id_int = int(str(args.body_id))
-        except ValueError:
-            parser.error(f"body_id must be an integer (e.g. 499), got: {args.body_id}")
-
         s_unit, o_unit = asteroid.get_ephems(
             body=str(args.jpl_id),
             start_time=args.start_time,

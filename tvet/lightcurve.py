@@ -19,15 +19,15 @@ class LightCurve:
             raise ValueError("LightCurve requires an Asteroid instance.")
         self.asteroid = asteroid
 
-        self.f_func = asteroid.f_func if f_func is None else f_func
-        self.start = asteroid.start if start is None else start
-        self.stop = asteroid.stop if stop is None else stop
-        self.step = asteroid.step if step is None else step
-        self.period = asteroid.period if period is None else period
-        self.epoch = asteroid.epoch if epoch is None else epoch
-        self.l = asteroid.l if l is None else l
-        self.b = asteroid.b if b is None else b
-        self.phi0 = asteroid.phi0 if phi0 is None else phi0
+        self.f_func = f_func
+        self.start = 0 if start is None else start
+        self.stop = None if stop is None else stop
+        self.step = None if step is None else step
+        self.period = 1.0 if period is None else period
+        self.epoch = 0.0 if epoch is None else epoch
+        self.l = 0.0 if l is None else l
+        self.b = np.pi / 2 if b is None else b
+        self.phi0 = 0.0 if phi0 is None else phi0
 
     def compute(self):
         pass
@@ -64,6 +64,7 @@ class LightCurve:
         phi3 = l
         
         total = np.empty((n, 2), dtype=np.double)
+        f_func = self.f_func if self.f_func is not None else asteroid.f_func
 
         for i in range(n):
             t = start + period * i/n
@@ -77,7 +78,7 @@ class LightCurve:
             o_ = asteroid.rotate_y(o_, phi2)
             o_ = asteroid.rotate_z(o_, phi3)
 
-            asteroid.get_fluxes(s=s_, o=o_, f_func=self.f_func)
+            asteroid.get_fluxes(s=s_, o=o_, f_func=f_func)
             total[i, 0] = t
             total[i, 1] = asteroid.total
 
