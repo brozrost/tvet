@@ -16,21 +16,27 @@ def main():
     parser = argparse.ArgumentParser(
         description="TVET CLI - Asteroid Visualization & Analysis",
         usage="""
-        tvet <filename|body_id> [body_id] [options]
+        tvet <obj_file> [options]
+            Example: tvet asteroid.obj --plot-light-curve
 
-        Example (OBJ, static vectors):
-            tvet asteroid.obj --plot-light-curve --s 1,0,0 --o 0,0,1
+        tvet --jpl <id> --start <t> --stop <t> --step <dt> [options]
+            Example: tvet --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
 
-        Example (OBJ + Horizons ephemerides):
-            tvet asteroid.obj 499 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m --fluxes
+        tvet --damit <id> [options]
+            Example: tvet --damit 10809
 
-        Example (ephemerides only):
-            tvet 499 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
+        tvet <obj_file> --jpl <id> --start <t> --stop <t> --step <dt> [options]
+            Example: tvet asteroid.obj --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
+        
+        tvet --damit <id> --jpl <id> --start <t> --stop <t> --step <dt> [options]
+            Example: tvet --damit 10809 --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
         """
     )
 
-    parser.add_argument("filename", nargs="?", help="Path to OBJ file OR numeric body id (e.g. 499)")
-    parser.add_argument("body_id", nargs="?", help="Numeric body id for Horizons (e.g. 499). If provided with an OBJ, s/o are taken from Horizons.")
+    parser.add_argument("filename", nargs="?", help="Path to local OBJ file (optional).")
+
+    parser.add_argument("-j", "--jpl", dest="jpl_id", type=int, help="JPL Horizons body id (integer)")
+    parser.add_argument("-d", "--damit", dest="damit_id", type=int, help="DAMIT asteroid/model id (integer)")
 
     parser.add_argument('--s', type=parse_vector, default=None, help="Incident light vector, e.g. '1,0,0'")
     parser.add_argument('--o', type=parse_vector, default=None, help="Observer vector, e.g. '0,0,1'")
@@ -38,6 +44,7 @@ def main():
     parser.add_argument("--geometry", action="store_true", help="Returns centers and normals of the asteroid triangle mesh and saves them to out/centers.txt and out/normals.txt")
     parser.add_argument("--cosines", action="store_true", help="Returns mu_i and mu_e and saves them to out/mu_i.txt and out/mu_e.txt")
     parser.add_argument("--fluxes", action="store_true", help="Returns phi_i, phi_e, and total flux and saves them to out/phi_i.txt, out/phi_e.txt, and out/total_flux.txt")
+    parser.add_argument("--spin", type=float, nargs=5, metavar=("PERIOD", "EPOCH", "L", "B", "PHI0"), help="Spin state: period, epoch, l, b, phi0. Example: --spin 4.0 0.0 1.2 1.57 0.0")
     parser.add_argument("--light-curve", action="store_true", help="Save the asteroid light curve points to out/light_curve.txt")
     parser.add_argument("--plot-light-curve", action="store_true", help="Plot the asteroid light curve using matplotlib")
 
@@ -59,54 +66,42 @@ def main():
 
     args = parser.parse_args()
 
-    if args.filename is None:
-        parser.error("Missing target. Use `tvet asteroid.obj ...` or `tvet 499 --start ... --stop ... --step ...`")
+    has_obj = isinstance(args.filename, str) and args.filename.lower().endswith(".obj")
+    has_jpl = args.jpl_id is not None
+    has_damit = args.damit_id is not None
+
+    # EXCEPTIONS - coliding/incomplete arguments
+    if args.filename is not None and not has_obj:
+        parser.error("Positional argument must be a path to a .obj file.")
+
+    if has_jpl and not args.start_time:
+        parser.error("--jpl requires --start.")
+    if (args.start_time or args.stop_time or args.step_size) and not has_jpl:
+        parser.error("--start/--stop/--step are only valid together with --jpl.")
+    
+    if args.spin is not None and has_damit:
+        parser.error("Can not use --spin and --damit together, they provide coliding information.")
 
     # Determine mode
-    filename_looks_like_obj = isinstance(args.filename, str) and args.filename.lower().endswith(".obj")
-    filename_is_int = False
-    filename_int = None
+    mode_jpl_only = has_jpl and (not has_damit) and (not has_obj)
+    mode_damit_only = has_damit and (not has_jpl) and (not has_obj)
+    mode_local_obj = has_obj  # may be combined with --jpl and/or --damit
+    mode_jpl_damit = has_jpl and has_damit and (not has_obj)
 
-    if not filename_looks_like_obj:
-        try:
-            filename_int = int(str(args.filename))
-            filename_is_int = True
-        except ValueError:
-            filename_is_int = False
-
-    eph_only = filename_is_int and (args.body_id is None)
-    obj_plus_eph = filename_looks_like_obj and (args.body_id is not None)
-    obj_only = filename_looks_like_obj and (args.body_id is None)
-
-    # Check different mode exceptions
-    if obj_plus_eph and ((args.s is not None) or (args.o is not None)):
-        parser.error("Do not use --s/--o together with body_id. Ephemerides define s/o.")
-
-    if args.s is None: 
-        args.s = np.array([1.0, 0.0, 0.0], dtype=np.double)
-    if args.o is None: 
-        args.o = np.array([0.0, 0.0, 1.0], dtype=np.double)
-
-    if not (eph_only or obj_plus_eph or obj_only):
-        parser.error("Invalid invocation. Use `tvet asteroid.obj ...` or `tvet asteroid.obj 499 --start --stop --step ...` or `tvet 499 --start --stop --step`.")
-
-    if eph_only or obj_plus_eph:
-        if not (args.start_time and args.stop_time and args.step_size):
-            parser.error("Ephemeris mode requires --start, --stop, and --step.")
+    if not (mode_jpl_only or mode_damit_only or mode_local_obj or mode_jpl_damit):
+        parser.error("Invalid invocation. Provide a local .obj file, or use --jpl, or use --damit, or use --jpl + --damit.")
 
     out_dir = "out"
     if not args.no_save:
         os.makedirs(out_dir, exist_ok=True)
 
-    # ===================================
-    # MODE 1: eph-only (save eph to file)
-    # ===================================
-    if eph_only:
-        body_id_int = filename_int
+    if mode_jpl_only:
+        if not args.stop:
+            pass
 
         asteroid = Asteroid(args=args, filename=None)
         s_unit, o_unit = asteroid.get_ephems(
-            body=str(body_id_int),
+            body=str(args.jpl_id),
             start_time=args.start_time,
             stop_time=args.stop_time,
             step_size=args.step_size,
@@ -122,7 +117,7 @@ def main():
             np.savetxt(os.path.join(out_dir, "ephemerides.txt"), data, header="sx sy sz ox oy oz")
 
         if not args.quiet:
-            print(f"\nEphemerides: body [{body_id_int}] points [{data.shape[0]}]\n")
+            print(f"\nEphemerides: body [{args.jpl_id}] points [{data.shape[0]}]\n")
 
             if not args.no_save:
                 print(f"Saved vectors to {out_dir}/ephemerides.txt\n")
@@ -131,13 +126,30 @@ def main():
                 print(f"Vectors [sx sy sz ox oy oz] (first {args.verbose}):\n {data[:args.verbose]}\n ...\n")
 
         return
+    
+    if mode_damit_only:
+        return
 
-    if filename_looks_like_obj and not os.path.isfile(args.filename):
+    if has_obj and not os.path.isfile(args.filename):
         parser.error(f"OBJ file not found: {args.filename}")
 
     asteroid = Asteroid(args=args, filename=args.filename)
-    asteroid.s = args.s
-    asteroid.o = args.o
+    if args.s is not None:
+        asteroid.s = args.s
+    if args.o is not None:
+        asteroid.o = args.o
+
+    if args.spin is not None:
+        period, epoch, l, b, phi0 = args.spin
+
+        if period <= 0.0:
+            parser.error(f"--spin PERIOD must be > 0, got: {period}")
+
+        asteroid.period = float(period)
+        asteroid.epoch = float(epoch)
+        asteroid.l = float(l)
+        asteroid.b = float(b)
+        asteroid.phi0 = float(phi0)
 
     out_flags = [
         args.geometry,
@@ -147,17 +159,14 @@ def main():
         args.plot_light_curve
     ]
 
-    # ==================
-    # MODE 2: obj + eph
-    # ==================
-    if obj_plus_eph:
+    if has_jpl:
         try:
             body_id_int = int(str(args.body_id))
         except ValueError:
             parser.error(f"body_id must be an integer (e.g. 499), got: {args.body_id}")
 
         s_unit, o_unit = asteroid.get_ephems(
-            body=str(body_id_int),
+            body=str(args.jpl_id),
             start_time=args.start_time,
             stop_time=args.stop_time,
             step_size=args.step_size,
@@ -173,9 +182,9 @@ def main():
         asteroid.s = s_unit[0]
         asteroid.o = o_unit[0]
 
-    # =============================================
-    # MODE 3: obj + eph || obj with static vectors
-    # =============================================
+    if has_damit:
+        pass
+
     if args.geometry:
         asteroid.get_geometry()
 
@@ -235,7 +244,7 @@ def main():
         
 
     if args.light_curve:
-        curve_points = asteroid.get_light_curve()
+        curve_points = asteroid.get_light_curve_for_period()
 
         if not args.no_save:
             np.savetxt(os.path.join(out_dir, "light_curve.txt"), curve_points)
@@ -250,7 +259,7 @@ def main():
                 print(f"Curve points: (first {args.verbose})\n {curve_points[:args.verbose]}\n")
 
     if args.plot_light_curve:
-        curve_points = asteroid.get_light_curve()
+        curve_points = asteroid.get_light_curve_for_period()
 
         if not args.quiet:
             asteroid.plot_light_curve(curve_points)

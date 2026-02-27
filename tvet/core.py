@@ -10,15 +10,13 @@ from . import scattering
 from .io import load_obj
 from . import horizons
 from . import damit
+from . import lightcurve
 from . import _tvet
 
 class Asteroid:
     def __init__(self, args=None, filename=None):
         self.args = args
         self.filename = filename
-
-        self.horizons = horizons.HorizonsClient()
-        self.damit = damit.DamitClient()
 
         if self.filename is not None:
             self.vertices, self.faces = load_obj(self.filename)
@@ -36,7 +34,8 @@ class Asteroid:
         self.o_array = None
 
         self.start = 0
-        self.stop = 0
+        self.stop = None
+        self.step = None
 
         self.period = 1
         self.epoch = 0.0
@@ -70,6 +69,10 @@ class Asteroid:
                 self.f_func = scattering.f_lambert
         else:
             self.f_func = scattering.f_lambert
+
+        self.horizons = horizons.HorizonsClient()
+        self.damit = damit.DamitClient()
+        self.lightcurve = lightcurve.LightCurve(self)
 
     def get_geometry(self):
         if self.vertices is None or self.faces is None:
@@ -147,11 +150,13 @@ class Asteroid:
         self.nu_i = self.nu_i_C
         self.nu_e = self.nu_e_C
 
-    def get_fluxes(self, s=None, o=None):
+    def get_fluxes(self, s=None, o=None, f_func=None):
         if s is None: 
             s = self.s
         if o is None: 
             o = self.o
+        if f_func is None:
+            f_func = self.f_func
 
         self.get_cosines(s=s, o=o)
 
@@ -162,7 +167,7 @@ class Asteroid:
         A_w = 0.23
         self.f_L = A_w/(4.0*np.pi)
         for i in range(len(self.mu_e)):
-            f.append(self.f_func(self.f_L, self.mu_i[i], self.mu_e[i], self.alpha))
+            f.append(f_func(self.f_L, self.mu_i[i], self.mu_e[i], self.alpha))
         self.f = np.array(f)
 
         self.I = self.f * self.phi_i
@@ -215,57 +220,21 @@ class Asteroid:
 
         return a_
     
-    #def get_light_curve:
+    def get_light_curve(self):
+        pass
 
-
-    def get_light_curve(self, s=None, o=None, n=100, start=None, period=None, epoch=None, l=None, b=None, phi0=None):
-        if s is None: 
-            s = self.s
-        if o is None: 
-            o = self.o
-        if start is None:
-            start = self.start
-        if period is None:
-            period = self.period
-        if epoch is None:
-            epoch = self.epoch
-        if l is None:
-            l = self.l
-        if b is None:
-            b = self.b
-        if phi0 is None:
-            phi0 = self.phi0
-
-        phi2 = np.pi / 2.0 - b
-        phi3 = l
-        
-        total = []
-
-        for i in range(n):
-            t = start + period * i/n
-            phi1 = 2.0 * np.pi * (t - epoch) / period + phi0
-
-            s_ = self.rotate_z(s, phi1)
-            s_ = self.rotate_y(s_, phi2)
-            s_ = self.rotate_z(s_, phi3)
-
-            o_ = self.rotate_z(o, phi1)
-            o_ = self.rotate_y(o_, phi2)
-            o_ = self.rotate_z(o_, phi3)
-
-            self.get_fluxes(s=s_, o=o_)
-            total.append((t, self.total))
-
-        total = np.array(total)
-
-        # Normalize
-        denx = np.max(total[:, 0]) - np.min(total[:, 0])
-        total[:, 0] = (total[:, 0] - np.min(total[:, 0])) / denx if denx > 0 else 0.0
-
-        deny = np.max(total[:, 1]) - np.min(total[:, 1])
-        total[:, 1] = -(total[:, 1] - np.min(total[:, 1])) / deny if deny > 0 else 0.0
-
-        return total
+    def get_light_curve_for_period(self, s=None, o=None, n=100, start=None, period=None, epoch=None, l=None, b=None, phi0=None):
+        return self.lightcurve.compute_for_period(
+            s=s,
+            o=o,
+            n=n,
+            start=start,
+            period=period,
+            epoch=epoch,
+            l=l,
+            b=b,
+            phi0=phi0,
+        )
 
     def plot_light_curve(self, curve_points):
         if curve_points is None:
