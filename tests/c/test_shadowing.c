@@ -1,6 +1,6 @@
-// g++ test_shadowing.c ../shadowing.c ../bounding_box.c ../intersect_AB_t.c ../vector_math.c -o out/test_shadowing.out
+// g++ test_shadowing.c ../../tvet/csrc/shadowing.c ../../tvet/csrc/bounding_box.c ../../tvet/csrc/intersect_AB_t.c ../../tvet/csrc/vector_math.c -o out/test_shadowing.out
 
-#include "../shadowing.h"
+#include "../../tvet/csrc/shadowing.h"
 #include <math.h>
 #include <assert.h>
 

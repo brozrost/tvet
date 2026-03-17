@@ -1,6 +1,6 @@
-// g++ test_vector_math.c ../vector_math.c -o out/test_vector_math.out
+// g++ test_vector_math.c ../../tvet/csrc/vector_math.c -o out/test_vector_math.out
 
-#include "../vector_math.h"
+#include "../../tvet/csrc/vector_math.h"
 #include <math.h>
 #include <assert.h>
 

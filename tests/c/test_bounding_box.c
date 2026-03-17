@@ -1,6 +1,6 @@
-// g++ test_bounding_box.c ../bounding_box.c ../vector_math.c -o out/test_bounding_box.out
+// g++ test_bounding_box.c ../../tvet/csrc/bounding_box.c ../../tvet/csrc/vector_math.c -o out/test_bounding_box.out
 
-#include "../bounding_box.h"
+#include "../../tvet/csrc/bounding_box.h"
 #include <math.h>
 #include <assert.h>
 
