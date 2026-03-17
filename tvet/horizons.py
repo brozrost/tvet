@@ -12,6 +12,71 @@ class HorizonsClient:
     def __init__(self, *, base_url: str = HORIZONS_URL):
         self.base_url = base_url
 
+    def _send_request(self, *, params: dict, timeout: float) -> str:
+        try:
+            response = requests.get(self.base_url, params=params, timeout=timeout)
+        except requests.RequestException as exc:
+            raise HorizonsError(f"Network error: {exc}") from exc
+
+        if response.status_code != 200:
+            raise HorizonsError(f"HTTP {response.status_code}: {response.text}")
+
+        try:
+            data = response.json()
+        except ValueError as exc:
+            raise HorizonsError("Invalid JSON response from Horizons.") from exc
+
+        if "error" in data and data["error"]:
+            raise HorizonsError(data["error"])
+
+        if "result" not in data:
+            raise HorizonsError("Unexpected Horizons response format.")
+
+        return data["result"]
+    
+    def _extract_lines(self, *, text: str) -> list[str]:
+        start = text.find("$$SOE")
+        end = text.find("$$EOE")
+        if start == -1 or end == -1:
+            raise HorizonsError("Ephemeris block not found in response.")
+
+        block = text[start + 5:end].strip()
+        lines = [ln for ln in block.splitlines() if ln.strip()]
+
+        return lines
+    
+    def _parse_row(self, row: list[str]) -> tuple[float, float, float]:
+        # Drop trailing comma
+        if row and row[-1].strip() == "":
+            row = row[:-1]
+
+        if len(row) < 5:
+            raise HorizonsError(f"Unexpected VECTORS row: {row}")
+
+        try:
+            x = float(row[2].strip())
+            y = float(row[3].strip())
+            z = float(row[4].strip())
+        except ValueError as exc:
+            raise HorizonsError(f"Failed to parse XYZ from row: {row}") from exc
+        
+        return x, y, z
+    
+    def _normalize_vectors(self, vectors: np.ndarray) -> np.ndarray:
+        vectors = np.asarray(vectors, dtype=np.double)
+
+        if vectors.ndim == 1 and vectors.shape[0] == 3:
+            n = np.linalg.norm(vectors)
+            return vectors / (n if n > 0.0 else 1.0)
+
+        if vectors.ndim != 2 or vectors.shape[1] != 3:
+            raise ValueError(f"Expected shape (N,3) or (3,), got {vectors.shape}")
+        
+        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+        norms = np.where(norms > 0.0, norms, 1.0)
+
+        return vectors / norms
+
     def fetch_single_ephem(
         self,
         *,
@@ -34,55 +99,18 @@ class HorizonsClient:
             "OBJ_DATA": "'YES'" if obj_data else "'NO'",
         }
 
-        try:
-            response = requests.get(self.base_url, params=params, timeout=timeout)
-        except requests.RequestException as exc:
-            raise HorizonsError(f"Network error: {exc}") from exc
+        response_text = self._send_request(params=params, timeout=timeout)
 
-        if response.status_code != 200:
-            raise HorizonsError(f"HTTP {response.status_code}: {response.text}")
-
-        try:
-            data = response.json()
-        except ValueError as exc:
-            raise HorizonsError("Invalid JSON response from Horizons.") from exc
-
-        if "error" in data and data["error"]:
-            raise HorizonsError(data["error"])
-
-        if "result" not in data:
-            raise HorizonsError("Unexpected Horizons response format.")
-
-        result_text = data["result"]
-
-        start = result_text.find("$$SOE")
-        end = result_text.find("$$EOE")
-        if start == -1 or end == -1:
-            raise HorizonsError("Ephemeris block not found in response.")
-
-        block = result_text[start + 5:end].strip()
-
-        lines = [ln for ln in block.splitlines() if ln.strip()]
+        lines = self._extract_lines(text=response_text)
         if len(lines) != 1:
             raise HorizonsError(f"Expected exactly one VECTORS row for epoch={epoch}, got {len(lines)}")
         
-        reader = csv.reader(io.StringIO(lines[0]))
+        reader = csv.reader(io.StringIO("\n".join(lines)))
         row = next(reader, None)
         if not row:
             raise HorizonsError("Empty VECTORS row in response.")
         
-        if row and row[-1].strip() == "":
-            row = row[:-1]
-
-        if len(row) < 5:
-            raise HorizonsError(f"Unexpected VECTORS row: {row}")
-
-        try:
-            x = float(row[2].strip())
-            y = float(row[3].strip())
-            z = float(row[4].strip())
-        except ValueError as exc:
-            raise HorizonsError(f"Failed to parse XYZ from row: {row}") from exc
+        x, y, z = self._parse_row(row)
 
         return np.array([x, y, z], dtype=np.double)
 
@@ -112,35 +140,9 @@ class HorizonsClient:
             "OBJ_DATA": "'YES'" if obj_data else "'NO'",
         }
 
-        try:
-            response = requests.get(self.base_url, params=params, timeout=timeout)
-        except requests.RequestException as exc:
-            raise HorizonsError(f"Network error: {exc}") from exc
+        response_text = self._send_request(params=params, timeout=timeout)
+        lines = self._extract_lines(text=response_text)
 
-        if response.status_code != 200:
-            raise HorizonsError(f"HTTP {response.status_code}: {response.text}")
-
-        try:
-            data = response.json()
-        except ValueError as exc:
-            raise HorizonsError("Invalid JSON response from Horizons.") from exc
-
-        if "error" in data and data["error"]:
-            raise HorizonsError(data["error"])
-
-        if "result" not in data:
-            raise HorizonsError("Unexpected Horizons response format.")
-
-        result_text = data["result"]
-
-        start = result_text.find("$$SOE")
-        end = result_text.find("$$EOE")
-        if start == -1 or end == -1:
-            raise HorizonsError("Ephemeris block not found in response.")
-
-        block = result_text[start + 5:end].strip()
-
-        lines = [ln for ln in block.splitlines() if ln.strip()]
         reader = csv.reader(io.StringIO("\n".join(lines)))
 
         xyz = []
@@ -148,38 +150,10 @@ class HorizonsClient:
             if not row:
                 continue
 
-            # Drop trailing comma
-            if row and row[-1].strip() == "":
-                row = row[:-1]
-
-            if len(row) < 5:
-                raise HorizonsError(f"Unexpected VECTORS row: {row}")
-
-            try:
-                x = float(row[2].strip())
-                y = float(row[3].strip())
-                z = float(row[4].strip())
-            except ValueError as exc:
-                raise HorizonsError(f"Failed to parse XYZ from row: {row}") from exc
-
+            x, y, z = self._parse_row(row)
             xyz.append((x, y, z))
 
         return np.asarray(xyz, dtype=np.double)
-    
-    def normalize_vectors(self, vectors: np.ndarray) -> np.ndarray:
-        vectors = np.asarray(vectors, dtype=np.double)
-
-        if vectors.ndim == 1 and vectors.shape[0] == 3:
-            n = np.linalg.norm(vectors)
-            return vectors / (n if n > 0.0 else 1.0)
-
-        if vectors.ndim != 2 or vectors.shape[1] != 3:
-            raise ValueError(f"Expected shape (N,3) or (3,), got {vectors.shape}")
-        
-        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
-        norms = np.where(norms > 0.0, norms, 1.0)
-
-        return vectors / norms
     
     def fetch_single_so(
         self,
@@ -214,7 +188,7 @@ class HorizonsClient:
         if not normalize:
             return s, o
         
-        return self.normalize_vectors(s), self.normalize_vectors(o)
+        return self._normalize_vectors(s), self._normalize_vectors(o)
 
     def fetch_so(
         self,
@@ -261,4 +235,4 @@ class HorizonsClient:
         if not normalize:
             return s, o
         
-        return self.normalize_vectors(s), self.normalize_vectors(o)
+        return self._normalize_vectors(s), self._normalize_vectors(o)
