@@ -12,6 +12,9 @@ class HorizonsClient:
     def __init__(self, *, base_url: str = HORIZONS_URL):
         self.base_url = base_url
 
+    def _format_time(self, time: str) -> str:
+        return time.replace("T", " ")
+
     def _send_request(self, *, params: dict, timeout: float) -> str:
         try:
             response = requests.get(self.base_url, params=params, timeout=timeout)
@@ -92,7 +95,7 @@ class HorizonsClient:
             "EPHEM_TYPE": "VECTORS",
             "COMMAND": f"'{body}'",
             "CENTER": f"'{center}'",
-            "TLIST": f"'{epoch}'",
+            "TLIST": f"'{self._format_time(epoch)}'",
             "VEC_TABLE": "'2'",
             "OUT_UNITS": "'KM-S'",
             "CSV_FORMAT": "YES",

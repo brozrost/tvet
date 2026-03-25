@@ -127,6 +127,25 @@ class Asteroid:
 
         self.total = np.sum(self.phi_e)
 
+    def get_single_ephem(
+        self,
+        *,
+        body: str,
+        epoch: str,
+        observer_center: str = "500@399",
+        sun_center: str = "500@10",
+        normalize: bool = True,
+        timeout: float = 30.0
+    ):
+        return self.horizons.fetch_single_so(
+            body=body,
+            epoch=epoch,
+            observer_center=observer_center,
+            sun_center=sun_center,
+            normalize=normalize,
+            timeout=timeout
+        )
+
     def get_ephems(
         self,
         *,

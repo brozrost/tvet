@@ -95,23 +95,38 @@ def main():
     if not args.no_save:
         os.makedirs(out_dir, exist_ok=True)
 
+    # MARK: - jpl only
+
     if mode_jpl_only:
-        if not args.stop_time:
-            pass
-
         asteroid = Asteroid(args=args, filename=None)
-        s_unit, o_unit = asteroid.get_ephems(
-            body=str(args.jpl_id),
-            start_time=args.start_time,
-            stop_time=args.stop_time,
-            step_size=args.step_size,
-            observer_center=args.observer_center,
-            sun_center=args.sun_center,
-            normalize=True,
-            timeout=args.timeout
-        )
 
-        data = np.hstack([s_unit, o_unit])
+        if args.stop_time:
+            s_unit, o_unit = asteroid.get_ephems(
+                body=str(args.jpl_id),
+                start_time=args.start_time,
+                stop_time=args.stop_time,
+                step_size=args.step_size,
+                observer_center=args.observer_center,
+                sun_center=args.sun_center,
+                normalize=True,
+                timeout=args.timeout
+            )
+
+            data = np.hstack([s_unit, o_unit])
+        else:
+            s_unit, o_unit = asteroid.get_single_ephem(
+                body=str(args.jpl_id),
+                epoch=args.start_time,
+                observer_center=args.observer_center,
+                sun_center=args.sun_center,
+                normalize=True,
+                timeout=args.timeout
+            )
+
+            data = np.hstack([s_unit, o_unit]).reshape(1, 6)
+
+            if args.verbose > 0:
+                args.verbose = 1
 
         if not args.no_save:
             np.savetxt(os.path.join(out_dir, "ephemerides.txt"), data, header="sx sy sz ox oy oz")
@@ -123,7 +138,12 @@ def main():
                 print(f"Saved vectors to {out_dir}/ephemerides.txt\n")
 
             if args.verbose > 0:
-                print(f"Vectors [sx sy sz ox oy oz] (first {args.verbose}):\n {data[:args.verbose]}\n ...\n")
+                print(
+                    "Vectors [sx sy sz ox oy oz] " +
+                    "(first " + (f"{args.verbose}):" if args.verbose <= data.shape[0] else f"{data.shape[0]}):") +
+                    f"\n {data[:args.verbose]} \n" +
+                    ("...\n" if args.verbose < data.shape[0] else "")
+                )
 
         return
     
