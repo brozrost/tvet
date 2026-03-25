@@ -103,6 +103,18 @@ def load_obj_file(filename, debug=False):
 
     return np.array(node), np.array(face)
 
+def save_obj_file(*, path: str, vertices, faces):
+    with open(path, "w", encoding="utf-8") as f:
+        for x, y, z in vertices:
+            f.write(f"v {x} {y} {z}\n")
+
+        for i, j, k in faces:
+            f.write(f"f {i + 1} {j + 1} {k + 1}\n")
+
+def save_spin(*, path: str, period, epoch, l, b, phi0):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"{l} {b} {period}\n{epoch} {phi0}")
+
 def check_filetype(filename):
     for index, character in enumerate(filename):
         if character == ".":

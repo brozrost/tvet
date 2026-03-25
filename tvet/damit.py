@@ -11,12 +11,15 @@ class DamitClient:
 
     def fetch_text(self, url: str, *, timeout: float) -> str:
         try:
-            response = requests.get(url, timeout=timeout)
+            response = requests.get(url, timeout=timeout, verify=True)
         except requests.RequestException as exc:
             raise DamitError(f"Network error: {exc}") from exc
         
         if response.status_code != 200:
             raise DamitError(f"HTTP {response.status_code}: {response.text}")
+        
+        if not response.text.strip():
+            raise DamitError(f"Empty response from {url}")
         
         return response.text
 
@@ -38,6 +41,11 @@ class DamitClient:
                 _, i, j, k = line.split()
                 faces.append((int(i) - 1, int(j) - 1, int(k) - 1))
 
+        if not vertices:
+            raise DamitError(f"No vertices found in shape.obj for model_id={model_id}")
+        if not faces:
+            raise DamitError(f"No faces found in shape.obj for model_id={model_id}")
+
         return vertices, faces
 
     def fetch_spin(self, *, model_id: int | str, timeout: float = 30.0):
@@ -52,7 +60,7 @@ class DamitClient:
         epoch, phi0 = map(float, lines[1].split())
         scat = float(lines[2].split()[0])
 
-        return l, b, period, epoch, phi0, scat
+        return period, epoch, l, b, phi0
 
 def main():
     damit = DamitClient()

@@ -169,6 +169,23 @@ class Asteroid:
             timeout=timeout
         )
     
+    def get_damit(
+        self,
+        *,
+        model_id: str,
+        timeout: float = 30.0
+    ):
+        self.shape.vertices, self.shape.faces = self.damit.fetch_obj(
+            model_id=model_id, 
+            timeout=timeout
+        )
+
+        lc = self.light_curve
+        lc.period, lc.epoch, lc.l, lc.b, lc.phi0 = self.damit.fetch_spin(
+            model_id=model_id, 
+            timeout=timeout
+        )
+    
     def rotate_y(self, a, phi):
         x, y, z = a
 

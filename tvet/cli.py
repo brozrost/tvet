@@ -4,7 +4,9 @@ import argparse
 import numpy as np
 import os
 import vispy.app
+
 from .core import Asteroid
+from . import io
 
 def parse_vector(vec_str):
     res = list(map(float, vec_str.split(',')))
@@ -73,6 +75,8 @@ def main():
     # EXCEPTIONS - coliding/incomplete arguments
     if args.filename is not None and not has_obj:
         parser.error("Positional argument must be a path to a .obj file.")
+    if has_obj and not os.path.isfile(args.filename):
+        parser.error(f"OBJ file not found: {args.filename}")
 
     if has_jpl and not args.start_time:
         parser.error("--jpl requires --start.")
@@ -147,11 +151,64 @@ def main():
 
         return
     
-    if mode_damit_only:
-        return
+    # MARK: - damit only
 
-    if has_obj and not os.path.isfile(args.filename):
-        parser.error(f"OBJ file not found: {args.filename}")
+    if mode_damit_only:
+        asteroid = Asteroid(args=args, filename=None)
+
+        asteroid.get_damit(model_id=args.damit_id)
+
+        if not args.no_save:
+            io.save_obj_file(
+                path=os.path.join(out_dir, f"shape_{args.damit_id}.obj"), 
+                vertices=asteroid.shape.vertices,
+                faces=asteroid.shape.faces
+            )
+
+            io.save_spin(
+                path=os.path.join(out_dir, f"spin_{args.damit_id}.txt"),
+                period=asteroid.light_curve.period, 
+                epoch=asteroid.light_curve.epoch, 
+                l=asteroid.light_curve.l, 
+                b=asteroid.light_curve.b, 
+                phi0=asteroid.light_curve.phi0
+            )
+
+        if not args.quiet:
+            v_len = len(asteroid.shape.vertices)
+            f_len = len(asteroid.shape.faces)
+
+            print(f"\nShape model: body [{args.damit_id}] " + 
+                f"vertices [{v_len}] " +
+                f"faces [{f_len}]"
+            )
+            print(f"Spin:\nl [{asteroid.light_curve.l}] " + 
+                f"b [{asteroid.light_curve.b}] " +
+                f"period [{asteroid.light_curve.period}]\n" +
+                f"epoch [{asteroid.light_curve.epoch}] " +
+                f"phi0 [{asteroid.light_curve.phi0}]\n"
+            )
+
+            if not args.no_save:
+                print(f"Saved shape model to {out_dir}/shape_{args.damit_id}.obj")
+                print(f"Saved spin to {out_dir}/spin_{args.damit_id}.txt\n")
+
+            if args.verbose > 0:
+                print(
+                    "Vertices: " +
+                    "(first " + (f"{args.verbose}):" if args.verbose <= v_len else f"{v_len}):") +
+                    f"\n {asteroid.shape.vertices[:args.verbose]} \n" +
+                    ("...\n" if args.verbose < v_len else "")
+                )
+
+                print(
+                    "Faces: " +
+                    "(first " + (f"{args.verbose}):" if args.verbose <= f_len else f"{f_len}):") +
+                    f"\n {asteroid.shape.faces[:args.verbose]} \n" +
+                    ("...\n" if args.verbose < f_len else "")
+                )
+
+        return
 
     asteroid = Asteroid(args=args, filename=args.filename)
     if args.s is not None:
@@ -170,14 +227,6 @@ def main():
         asteroid.light_curve.l = float(l)
         asteroid.light_curve.b = float(b)
         asteroid.light_curve.phi0 = float(phi0)
-
-    out_flags = [
-        args.geometry,
-        args.cosines,
-        args.fluxes,
-        args.light_curve,
-        args.plot_light_curve
-    ]
 
     if has_jpl:
         s_unit, o_unit = asteroid.get_ephems(
@@ -198,7 +247,17 @@ def main():
         asteroid.o = o_unit[0]
 
     if has_damit:
-        pass
+        asteroid.get_damit(model_id=args.damit_id)
+
+    # MARK: - options
+
+    out_flags = [
+        args.geometry,
+        args.cosines,
+        args.fluxes,
+        args.light_curve,
+        args.plot_light_curve
+    ]
 
     if args.geometry:
         asteroid.get_geometry()
