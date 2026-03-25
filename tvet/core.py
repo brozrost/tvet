@@ -181,7 +181,7 @@ class Asteroid:
         )
 
         lc = self.light_curve
-        lc.period, lc.epoch, lc.l, lc.b, lc.phi0 = self.damit.fetch_spin(
+        lc.l, lc.b, lc.period, lc.epoch, lc.phi0 = self.damit.fetch_spin(
             model_id=model_id, 
             timeout=timeout
         )

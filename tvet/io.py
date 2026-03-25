@@ -111,7 +111,7 @@ def save_obj_file(*, path: str, vertices, faces):
         for i, j, k in faces:
             f.write(f"f {i + 1} {j + 1} {k + 1}\n")
 
-def save_spin(*, path: str, period, epoch, l, b, phi0):
+def save_spin(*, path: str, l, b, period, epoch, phi0):
     with open(path, "w", encoding="utf-8") as f:
         f.write(f"{l} {b} {period}\n{epoch} {phi0}")
 

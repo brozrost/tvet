@@ -9,10 +9,10 @@ class LightCurve:
         start=None, 
         stop=None, 
         step=None, 
-        period=None,
-        epoch=None,
         l=None,
         b=None,
+        period=None,
+        epoch=None,
         phi0=None,
     ):
         if asteroid is None:
@@ -23,16 +23,16 @@ class LightCurve:
         self.start = 0 if start is None else start
         self.stop = None if stop is None else stop
         self.step = None if step is None else step
-        self.period = 1.0 if period is None else period
-        self.epoch = 0.0 if epoch is None else epoch
         self.l = 0.0 if l is None else l
         self.b = np.pi / 2 if b is None else b
+        self.period = 1.0 if period is None else period
+        self.epoch = 0.0 if epoch is None else epoch
         self.phi0 = 0.0 if phi0 is None else phi0
 
     def compute(self):
         pass
 
-    def compute_for_period(self, s=None, o=None, n=100, start=None, period=None, epoch=None, l=None, b=None, phi0=None):
+    def compute_for_period(self, s=None, o=None, n=100, start=None, l=None, b=None, period=None, epoch=None, phi0=None):
         asteroid = self.asteroid
         
         if s is None: 
@@ -41,14 +41,14 @@ class LightCurve:
             o = asteroid.o
         if start is None:
             start = self.start
-        if period is None:
-            period = self.period
-        if epoch is None:
-            epoch = self.epoch
         if l is None:
             l = self.l
         if b is None:
             b = self.b
+        if period is None:
+            period = self.period
+        if epoch is None:
+            epoch = self.epoch
         if phi0 is None:
             phi0 = self.phi0
 

@@ -11,7 +11,7 @@ class DamitClient:
 
     def fetch_text(self, url: str, *, timeout: float) -> str:
         try:
-            response = requests.get(url, timeout=timeout, verify=True)
+            response = requests.get(url, timeout=timeout, verify=False)
         except requests.RequestException as exc:
             raise DamitError(f"Network error: {exc}") from exc
         
@@ -60,7 +60,7 @@ class DamitClient:
         epoch, phi0 = map(float, lines[1].split())
         scat = float(lines[2].split()[0])
 
-        return period, epoch, l, b, phi0
+        return l, b, period, epoch, phi0
 
 def main():
     damit = DamitClient()

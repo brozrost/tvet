@@ -167,10 +167,10 @@ def main():
 
             io.save_spin(
                 path=os.path.join(out_dir, f"spin_{args.damit_id}.txt"),
-                period=asteroid.light_curve.period, 
-                epoch=asteroid.light_curve.epoch, 
                 l=asteroid.light_curve.l, 
                 b=asteroid.light_curve.b, 
+                period=asteroid.light_curve.period, 
+                epoch=asteroid.light_curve.epoch, 
                 phi0=asteroid.light_curve.phi0
             )
 
