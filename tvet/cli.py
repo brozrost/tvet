@@ -178,15 +178,15 @@ def main():
             v_len = len(asteroid.shape.vertices)
             f_len = len(asteroid.shape.faces)
 
-            print(f"\nShape model: body [{args.damit_id}] " + 
-                f"vertices [{v_len}] " +
+            print(f"\nShape model: body {args.damit_id}, " + 
+                f"vertices [{v_len}], " +
                 f"faces [{f_len}]"
             )
-            print(f"Spin:\nl [{asteroid.light_curve.l}] " + 
-                f"b [{asteroid.light_curve.b}] " +
-                f"period [{asteroid.light_curve.period}]\n" +
-                f"epoch [{asteroid.light_curve.epoch}] " +
-                f"phi0 [{asteroid.light_curve.phi0}]\n"
+            print(f"Spin:\nl {asteroid.light_curve.l} " + 
+                f"b {asteroid.light_curve.b} " +
+                f"period {asteroid.light_curve.period}\n" +
+                f"epoch {asteroid.light_curve.epoch} " +
+                f"phi0 {asteroid.light_curve.phi0}\n"
             )
 
             if not args.no_save:
@@ -263,11 +263,11 @@ def main():
         asteroid.get_geometry()
 
         if not args.no_save:
-            np.savetxt(os.path.join(out_dir, "centers.txt"), asteroid.centers)
-            np.savetxt(os.path.join(out_dir, "normals.txt"), asteroid.normals)
+            np.savetxt(os.path.join(out_dir, "centers.txt"), asteroid.shape.centers)
+            np.savetxt(os.path.join(out_dir, "normals.txt"), asteroid.shape.normals)
 
         if not args.quiet:
-            print(f"\nGeometry: centers [{len(asteroid.centers)}], normals [{len(asteroid.normals)}]\n")
+            print(f"\nGeometry: centers [{len(asteroid.shape.centers)}], normals [{len(asteroid.shape.normals)}]\n")
 
             if not args.no_save:
                 print(f"Saved centers to {out_dir}/centers.txt")
