@@ -22,8 +22,9 @@ class ShapeModel:
         # Guard against recomputing geometry
         self._geometry_ready = False
 
-    def load_obj(self, filename: str):
-        self.vertices, self.faces = io.load_obj_file(filename)
+    def set_mesh(self, vertices, faces):
+        self.vertices = np.asarray(vertices, dtype=np.double)
+        self.faces = np.asarray(faces, dtype=np.intc)
 
         self.size = np.max(self.vertices) - np.min(self.vertices)
         if self.size == 0.0:
@@ -31,6 +32,10 @@ class ShapeModel:
         
         # This shrinks the model down so the axis and s/o vectors are visible
         self.vertices *= 1.9 / self.size
+
+    def load_obj(self, filename: str):
+        vertices, faces = io.load_obj_file(filename)
+        self.set_mesh(vertices, faces)
         
     def compute_geometry(self):
         if self.vertices is None or self.faces is None:

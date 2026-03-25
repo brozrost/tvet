@@ -175,10 +175,11 @@ class Asteroid:
         model_id: str,
         timeout: float = 30.0
     ):
-        self.shape.vertices, self.shape.faces = self.damit.fetch_obj(
+        vertices, faces = self.damit.fetch_obj(
             model_id=model_id, 
             timeout=timeout
         )
+        self.shape.set_mesh(vertices, faces)
 
         lc = self.light_curve
         lc.l, lc.b, lc.period, lc.epoch, lc.phi0 = self.damit.fetch_spin(
