@@ -99,11 +99,11 @@ def main():
     if not args.no_save:
         os.makedirs(out_dir, exist_ok=True)
 
+    asteroid = Asteroid(args=args, filename=args.filename)
+
     # MARK: - jpl only
 
     if mode_jpl_only:
-        asteroid = Asteroid(args=args, filename=None)
-
         if args.stop_time:
             s_unit, o_unit = asteroid.get_ephems(
                 body=str(args.jpl_id),
@@ -154,8 +154,6 @@ def main():
     # MARK: - damit only
 
     if mode_damit_only:
-        asteroid = Asteroid(args=args, filename=None)
-
         asteroid.get_damit(model_id=args.damit_id)
 
         if not args.no_save:
@@ -210,7 +208,6 @@ def main():
 
         return
 
-    asteroid = Asteroid(args=args, filename=args.filename)
     if args.s is not None:
         asteroid.s = args.s
     if args.o is not None:
