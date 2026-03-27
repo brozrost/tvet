@@ -180,11 +180,11 @@ def main():
                 f"vertices [{len_v}], " +
                 f"faces [{len_f}]"
             )
-            print(f"Spin:\nl {asteroid.light_curve.l} " + 
-                f"b {asteroid.light_curve.b} " +
-                f"period {asteroid.light_curve.period}\n" +
-                f"epoch {asteroid.light_curve.epoch} " +
-                f"phi0 {asteroid.light_curve.phi0}\n"
+            print(f"Spin:\n{asteroid.light_curve.l} " + 
+                f"{asteroid.light_curve.b} " +
+                f"{asteroid.light_curve.period}\n" +
+                f"{asteroid.light_curve.epoch} " +
+                f"{asteroid.light_curve.phi0}\n"
             )
 
             if not args.no_save:
