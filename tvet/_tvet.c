@@ -9,10 +9,10 @@ csrc/vector_math.c csrc/intersect_AB_t.c csrc/bounding_box.c csrc/shadowing.c \
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "c/vector_math.h"
-#include "c/intersect_AB_t.h"
-#include "c/bounding_box.h"
-#include "c/shadowing.h"
+#include "csrc/vector_math.h"
+#include "csrc/intersect_AB_t.h"
+#include "csrc/bounding_box.h"
+#include "csrc/shadowing.h"
 
 static PyObject *py_dotProduct3D(PyObject *self, PyObject *args) {
     PyObject *x = NULL;
