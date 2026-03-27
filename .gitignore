@@ -211,7 +211,7 @@ __marimo__/
 
 # CLI output files
 out/
-shadowing/
 
 *.out
 .vscode
+asteroid.obj
