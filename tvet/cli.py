@@ -173,12 +173,12 @@ def main():
             )
 
         if not args.quiet:
-            v_len = len(asteroid.shape.vertices)
-            f_len = len(asteroid.shape.faces)
+            len_v = len(asteroid.shape.vertices)
+            len_f = len(asteroid.shape.faces)
 
             print(f"\nShape model: body {args.damit_id}, " + 
-                f"vertices [{v_len}], " +
-                f"faces [{f_len}]"
+                f"vertices [{len_v}], " +
+                f"faces [{len_f}]"
             )
             print(f"Spin:\nl {asteroid.light_curve.l} " + 
                 f"b {asteroid.light_curve.b} " +
@@ -193,17 +193,15 @@ def main():
 
             if args.verbose > 0:
                 print(
-                    "Vertices: " +
-                    "(first " + (f"{args.verbose}):" if args.verbose <= v_len else f"{v_len}):") +
-                    f"\n {asteroid.shape.vertices[:args.verbose]} \n" +
-                    ("...\n" if args.verbose < v_len else "")
+                    "Vertices " +
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_v else f"{len_v}") +
+                    f" of {len_v}):\n {asteroid.shape.vertices[:args.verbose]} \n"
                 )
 
                 print(
-                    "Faces: " +
-                    "(first " + (f"{args.verbose}):" if args.verbose <= f_len else f"{f_len}):") +
-                    f"\n {asteroid.shape.faces[:args.verbose]} \n" +
-                    ("...\n" if args.verbose < f_len else "")
+                    "Faces " +
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_f else f"{len_f}") +
+                    f" of {len_f}):\n {asteroid.shape.faces[:args.verbose]} \n"
                 )
 
             if args.interactive_plot:
@@ -268,15 +266,24 @@ def main():
             np.savetxt(os.path.join(out_dir, "normals.txt"), asteroid.shape.normals)
 
         if not args.quiet:
-            print(f"\nGeometry: centers [{len(asteroid.shape.centers)}], normals [{len(asteroid.shape.normals)}]\n")
+            len_c = len(asteroid.shape.centers)
+            len_n = len(asteroid.shape.normals)
+
+            print(f"\nGeometry: centers [{len_c}], normals [{len_n}]\n")
 
             if not args.no_save:
                 print(f"Saved centers to {out_dir}/centers.txt")
                 print(f"Saved normals to {out_dir}/normals.txt\n")
 
             if args.verbose > 0:
-                print(f"Centers: (first {args.verbose})\n {asteroid.centers[:args.verbose]}\n")
-                print(f"Normals: (first {args.verbose})\n {asteroid.normals[:args.verbose]}\n")
+                print(f"Centers " + 
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_c else f"{len_c}") +
+                    f" of {len_c}):\n {asteroid.shape.centers[:args.verbose]}\n"
+                )
+                print(f"Normals " + 
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_n else f"{len_n}") +
+                    f" of {len_n}):\n {asteroid.shape.normals[:args.verbose]}\n"
+                )
 
     if args.cosines:
         asteroid.get_cosines()
@@ -286,15 +293,25 @@ def main():
             np.savetxt(os.path.join(out_dir, "mu_e.txt"), asteroid.mu_e)
 
         if not args.quiet:
-            print(f"\nCosines: mu_i [{len(asteroid.mu_i)}], mu_e [{len(asteroid.mu_e)}]\n")
+            len_i = len(asteroid.mu_i)
+            len_e = len(asteroid.mu_e)
+
+            print(f"\nCosines: mu_i [{len_i}], mu_e [{len_e}]\n")
 
             if not args.no_save:
                 print(f"Saved mu_i to {out_dir}/mu_i.txt")
                 print(f"Saved mu_e to {out_dir}/mu_e.txt\n")
 
             if args.verbose > 0:
-                print(f"mu_i: (first {args.verbose})\n {asteroid.mu_i[:args.verbose]}\n")
-                print(f"mu_e: (first {args.verbose})\n {asteroid.mu_e[:args.verbose]}\n")
+                print(f"mu_i " + 
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_i else f"{len_i}") +
+                    f" of {len_i}):\n {asteroid.mu_i[:args.verbose]}\n"
+                )
+
+                print(f"mu_e " + 
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_e else f"{len_e}") +
+                    f" of {len_e}):\n {asteroid.mu_e[:args.verbose]}\n"
+                )
         
     if args.fluxes:
         asteroid.get_fluxes()
@@ -305,7 +322,10 @@ def main():
             np.savetxt(os.path.join(out_dir, "total_flux.txt"), np.array([asteroid.total]))
 
         if not args.quiet:
-            print(f"\nFluxes: phi_i [{len(asteroid.phi_i)}], phi_e [{len(asteroid.phi_e)}]")
+            len_i = len(asteroid.phi_i)
+            len_e = len(asteroid.phi_e)
+
+            print(f"\nFluxes: phi_i [{len_i}], phi_e [{len_e}]")
             print(f"Total flux: {asteroid.total}\n")
 
             if not args.no_save:
@@ -314,9 +334,15 @@ def main():
                 print(f"Saved total flux to {out_dir}/total_flux.txt\n")
 
             if args.verbose > 0:
-                print(f"phi_i: (first {args.verbose})\n {asteroid.phi_i[:args.verbose]}\n")
-                print(f"phi_e: (first {args.verbose})\n {asteroid.phi_e[:args.verbose]}\n")
-        
+                print(f"phi_i " + 
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_i else f"{len_i}") +
+                    f" of {len_i}):\n {asteroid.phi_i[:args.verbose]}\n"
+                )
+
+                print(f"phi_e " + 
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_e else f"{len_e}") +
+                    f" of {len_e}):\n {asteroid.phi_e[:args.verbose]}\n"
+                )
 
     if args.light_curve:
         curve_points = asteroid.get_light_curve_for_period()
@@ -325,13 +351,18 @@ def main():
             np.savetxt(os.path.join(out_dir, "light_curve.txt"), curve_points)
 
         if not args.quiet:
-            print(f"\nLight curve: points [{len(curve_points)}]\n")
+            len_c = len(curve_points)
+
+            print(f"\nLight curve: points [{len_c}]\n")
 
             if not args.no_save:
                 print(f"Saved light curve to {out_dir}/light_curve.txt\n")
 
             if args.verbose > 0:
-                print(f"Curve points: (first {args.verbose})\n {curve_points[:args.verbose]}\n")
+                print(f"Curve points " + 
+                    "(first " + (f"{args.verbose}" if args.verbose <= len_c else f"{len_c}") +
+                    f" of {len_c}):\n {curve_points[:args.verbose]}\n"
+                )
 
     if args.plot_light_curve:
         curve_points = asteroid.get_light_curve_for_period()
