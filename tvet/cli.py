@@ -65,6 +65,7 @@ def main():
     parser.add_argument("-v", "--verbose", type=int, nargs="?", const=3, default=0, help="Show preview of first n elements (defaults to 3)")
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress all stdout output (files are still saved)")
     parser.add_argument("--no-save", action="store_true", help="Do not create output files/directories")
+    parser.add_argument("--no-normalize", dest="normalize", action="store_false", help="Disable normalization of all vectors before computation.")
 
     args = parser.parse_args()
 
@@ -112,7 +113,7 @@ def main():
                 step_size=args.step_size,
                 observer_center=args.observer_center,
                 sun_center=args.sun_center,
-                normalize=True,
+                normalize=args.normalize,
                 timeout=args.timeout
             )
 
@@ -123,7 +124,7 @@ def main():
                 epoch=args.start_time,
                 observer_center=args.observer_center,
                 sun_center=args.sun_center,
-                normalize=True,
+                normalize=args.normalize,
                 timeout=args.timeout
             )
 
@@ -235,7 +236,7 @@ def main():
             step_size=args.step_size,
             observer_center=args.observer_center,
             sun_center=args.sun_center,
-            normalize=True,
+            normalize=args.normalize,
             timeout=args.timeout
         )
 
