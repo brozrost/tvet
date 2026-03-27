@@ -16,7 +16,7 @@ class DamitClient:
             raise DamitError(f"Network error: {exc}") from exc
         
         if response.status_code != 200:
-            raise DamitError(f"HTTP {response.status_code}: {response.text}")
+            raise DamitError(f"HTTP {response.status_code} for {url}")
         
         if not response.text.strip():
             raise DamitError(f"Empty response from {url}")
