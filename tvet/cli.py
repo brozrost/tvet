@@ -206,6 +206,10 @@ def main():
                     ("...\n" if args.verbose < f_len else "")
                 )
 
+            if args.interactive_plot:
+                asteroid.interactive_plot()
+                vispy.app.run()
+
         return
 
     if args.s is not None:
