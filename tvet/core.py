@@ -47,6 +47,66 @@ class Asteroid:
         self.damit = damit.DamitClient()
         self.light_curve = lightcurve.LightCurve(self)
 
+    def _rotate_x(self, a, phi):
+        x, y, z = a
+
+        x_ = x
+        y_ = y * np.cos(phi) - z * np.sin(phi)
+        z_ = y * np.sin(phi) + z * np.cos(phi)
+
+        a_ = np.array([x_, y_, z_], dtype=np.double)
+
+        return a_
+
+    def _rotate_y(self, a, phi):
+        x, y, z = a
+
+        x_ = x * np.cos(phi) + z * np.sin(phi)
+        y_ = y
+        z_ = - x * np.sin(phi) + z * np.cos(phi)
+
+        a_ = np.array([x_, y_, z_], dtype=np.double)
+
+        return a_
+
+    def _rotate_z(self, a, phi):
+        x, y, z = a
+
+        x_ = x * np.cos(phi) - y * np.sin(phi)
+        y_ = x * np.sin(phi) + y * np.cos(phi)
+        z_ = z
+
+        a_ = np.array([x_, y_, z_], dtype=np.double)
+
+        return a_
+
+    def _match_vector(self, a, start_time):
+        phi1 = 2 * np.pi * (start_time - self.light_curve.epoch) / self.light_curve.period + self.light_curve.phi0
+        phi2 = np.pi / 2 - self.light_curve.b
+        phi3 = self.light_curve.l
+
+        # match damits ecliptic coordinates
+        eps = (23.0 + 26.0 / 60.0 + (21.406 / 3600.0)) * np.pi / 180
+        a_ = self._rotate_x(a, -eps)
+
+        a_ = self._rotate_z(a_, -phi3)
+        a_ = self._rotate_y(a_, -phi2)
+        a_ = self._rotate_z(a_, -phi1)
+
+        return a_
+
+    def set_body_frame(self, start_time):
+        self.s = self._match_vector(self.s, start_time)
+        self.o = self._match_vector(self.o, start_time)
+
+        if self.s_array is not None:
+            for vector in self.s_array:
+                self._match_vector(vector, start_time)
+
+        if self.o_array is not None:
+            for vector in self.o_array:
+                self._match_vector(vector, start_time)
+
     def get_geometry(self):
         if self.shape.vertices is None or self.shape.faces is None:
             raise ValueError("Geometry not available: no mesh loaded.")
@@ -186,28 +246,6 @@ class Asteroid:
             model_id=model_id, 
             timeout=timeout
         )
-    
-    def rotate_y(self, a, phi):
-        x, y, z = a
-
-        x_ = x * np.cos(phi) + z * np.sin(phi)
-        y_ = y
-        z_ = - x * np.sin(phi) + z * np.cos(phi)
-
-        a_ = np.array([x_, y_, z_], dtype=np.double)
-
-        return a_
-
-    def rotate_z(self, a, phi):
-        x, y, z = a
-
-        x_ = x * np.cos(phi) - y * np.sin(phi)
-        y_ = x * np.sin(phi) + y * np.cos(phi)
-        z_ = z
-
-        a_ = np.array([x_, y_, z_], dtype=np.double)
-
-        return a_
     
     def get_light_curve(self):
         pass
