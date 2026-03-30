@@ -18,8 +18,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="TVET CLI - Asteroid Visualization & Analysis",
         usage="""
+        tvet -h 
+
         tvet <obj_file> [options]
-            Example: tvet asteroid.obj --plot-light-curve
+            Example: tvet asteroid.obj -l
 
         tvet --jpl <id> --start <t> --stop <t> --step <dt> [options]
             Example: tvet --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
@@ -47,10 +49,9 @@ def main():
     parser.add_argument("--cosines", action="store_true", help="Returns mu_i and mu_e and saves them to out/mu_i.txt and out/mu_e.txt")
     parser.add_argument("--fluxes", action="store_true", help="Returns phi_i, phi_e, and total flux and saves them to out/phi_i.txt, out/phi_e.txt, and out/total_flux.txt")
     parser.add_argument("--spin", type=float, nargs=5, metavar=("PERIOD", "EPOCH", "L", "B", "PHI0"), help="Spin state: period, epoch, l, b, phi0. Example: --spin 4.0 0.0 1.2 1.57 0.0")
-    parser.add_argument("--light-curve", action="store_true", help="Save the asteroid light curve points to out/light_curve.txt")
-    parser.add_argument("--plot-light-curve", action="store_true", help="Plot the asteroid light curve using matplotlib")
+    parser.add_argument("-l", "--light-curve", action="store_true", help="Save the asteroid light curve points to out/light_curve.txt and plot the light curve.")
 
-    parser.add_argument("--interactive-plot", action="store_true", help="Plot the interactive asteroid geometry and light curve")
+    parser.add_argument("-i", "--interactive-plot", action="store_true", help="Plot the interactive asteroid geometry and light curve")
     parser.add_argument('--shininess', type=float, default=100, help="Shininess factor for the asteroid surface")
     parser.add_argument('--wireframe-width', type=float, default=1, help="Width of the wireframe lines")
 
@@ -246,6 +247,8 @@ def main():
         asteroid.s = s_unit[0]
         asteroid.o = o_unit[0]
 
+        asteroid.set_body_frame(float(args.start_time[2:]))
+
     if has_damit:
         asteroid.get_damit(model_id=args.damit_id)
 
@@ -256,7 +259,7 @@ def main():
         args.cosines,
         args.fluxes,
         args.light_curve,
-        args.plot_light_curve
+        args.light_curve
     ]
 
     if args.geometry:
@@ -365,10 +368,6 @@ def main():
                     f" of {len_c}):\n {curve_points[:args.verbose]}\n"
                 )
 
-    if args.plot_light_curve:
-        curve_points = asteroid.get_light_curve_for_period()
-
-        if not args.quiet:
             asteroid.plot_light_curve(curve_points)
 
     # Interactive plot is default if no out flags are set, or if explicitly requested
