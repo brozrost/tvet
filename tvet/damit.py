@@ -1,4 +1,5 @@
 import requests
+import numpy as np
 
 DAMIT_URL = "https://damit.cuni.cz/generated_files/open/AsteroidModel"
 
@@ -60,17 +61,7 @@ class DamitClient:
         epoch, phi0 = map(float, lines[1].split())
         scat = float(lines[2].split()[0])
 
+        l = np.radians(l)
+        b = np.radians(b)
+
         return l, b, period, epoch, phi0
-
-def main():
-    damit = DamitClient()
-
-    model_id = 103
-    vertices, faces = damit.fetch_obj(model_id=model_id)
-    spin = damit.fetch_spin(model_id=model_id)
-
-    print(len(vertices), len(faces))
-    print(spin)
-
-if __name__ == "__main__":
-    main()

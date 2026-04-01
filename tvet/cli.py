@@ -48,7 +48,7 @@ def main():
     parser.add_argument("--geometry", action="store_true", help="Returns centers and normals of the asteroid triangle mesh and saves them to out/centers.txt and out/normals.txt")
     parser.add_argument("--cosines", action="store_true", help="Returns mu_i and mu_e and saves them to out/mu_i.txt and out/mu_e.txt")
     parser.add_argument("--fluxes", action="store_true", help="Returns phi_i, phi_e, and total flux and saves them to out/phi_i.txt, out/phi_e.txt, and out/total_flux.txt")
-    parser.add_argument("--spin", type=float, nargs=5, metavar=("PERIOD", "EPOCH", "L", "B", "PHI0"), help="Spin state: period, epoch, l, b, phi0. Example: --spin 4.0 0.0 1.2 1.57 0.0")
+    parser.add_argument("--spin", type=float, nargs=5, metavar=("L", "B", "PERIOD", "EPOCH", "PHI0"), help="Spin state: l, b, period, epoch, phi0. Example: --spin 4.0 0.0 1.2 1.57 0.0")
     parser.add_argument("-l", "--light-curve", action="store_true", help="Save the asteroid light curve points to out/light_curve.txt and plot the light curve.")
 
     parser.add_argument("-i", "--interactive-plot", action="store_true", help="Plot the interactive asteroid geometry and light curve")
@@ -218,15 +218,15 @@ def main():
         asteroid.o = args.o
 
     if args.spin is not None:
-        period, epoch, l, b, phi0 = args.spin
+        l, b, period, epoch, phi0 = args.spin
 
         if period <= 0.0:
             parser.error(f"--spin PERIOD must be > 0, got: {period}")
 
+        asteroid.light_curve.l = float(np.radians(l))
+        asteroid.light_curve.b = float(np.radians(b))
         asteroid.light_curve.period = float(period)
         asteroid.light_curve.epoch = float(epoch)
-        asteroid.light_curve.l = float(l)
-        asteroid.light_curve.b = float(b)
         asteroid.light_curve.phi0 = float(phi0)
 
     if has_jpl:

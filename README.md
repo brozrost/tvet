@@ -82,3 +82,5 @@ For more details, see the [Key concepts](https://github.com/scraptechguy/tvet/bl
 
 + <b><a href="https://github.com/scraptechguy/tvet/blob/main/docs/CONCEPTS.md">Key concepts</a></b> (explains all key concepts used in tvet)
 + <b><a href="https://sirrah.troja.mff.cuni.cz/~mira/tmp/diplomky/Broz_2024.pdf">Dokumentace v češtině</a></b>
+
+`tvet 1826.obj -j 216 --start JD2457956.680048 --stop JD2457956.680049 --step 1m --spin 72.288710 21.7272233 0.224386764166667 2444502.76914 0.0`

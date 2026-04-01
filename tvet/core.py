@@ -283,6 +283,8 @@ class Asteroid:
         vispy.scene.visuals.Line(pos=((20, 570), (250, 570)), color='white', parent=self.canvas.scene)
         vispy.scene.visuals.Line(pos=((30, 360), (30, 580)), color='white', parent=self.canvas.scene)
 
+    # MARK: - interactive_plot()
+
     def interactive_plot(self):
         # Call geometry and flux setup with CLI vectors
         self.get_geometry()
@@ -301,7 +303,7 @@ class Asteroid:
         mesh.transform = vispy.scene.transforms.MatrixTransform()
         self.view.add(mesh)
 
-        pos = np.array([self.shape.centers, self.shape.centers + 0.1 * self.shape.normals])
+        pos = np.array([self.shape.centers, self.shape.centers + self.shape.normals])
         connect = []
         n = len(self.shape.centers)
         for i in range(n):
@@ -312,9 +314,13 @@ class Asteroid:
         # text = vispy.scene.visuals.Text(str(i), pos=self.centers[i], font_size=10, color='white')
         # self.view.add(text)
 
-        s_line = vispy.scene.visuals.Line(pos=np.array([(0, 0.02, 0), self.s+ (0, 0.02, 0)]), color='yellow', parent=self.view.scene)
-        o_line = vispy.scene.visuals.Line(pos=np.array([(0, 0.02, 0), self.o + (0, 0.02, 0)]), color='magenta', parent=self.view.scene)
-        
+        self.overlays = []
+
+        s_line = vispy.scene.visuals.Line(pos=np.array([(0, 0, 0), self.shape.size * self.s / 1.5]), color='yellow', parent=self.view.scene)
+        o_line = vispy.scene.visuals.Line(pos=np.array([(0, 0, 0), self.shape.size * self.o / 1.5]), color='magenta', parent=self.view.scene)
+        self.overlays.append(s_line)
+        self.overlays.append(o_line)
+
         vispy.scene.visuals.Text("'1' to show phi_i", anchor_x='left', pos=(20, 20), font_size=10,
                             color='white', parent=self.canvas.scene)
         vispy.scene.visuals.Text("'2' to show phi_e", anchor_x='left', pos=(20, 40), font_size=10,
@@ -348,7 +354,9 @@ class Asteroid:
         vispy.scene.visuals.Text("Asteroid size: %f" %(self.shape.size), anchor_x='left', pos=(20, 340), font_size=10,
                             color='white', parent=self.canvas.scene)
         
-        vispy.scene.visuals.XYZAxis(parent=self.view.scene)
+        scale = self.shape.size / 1.5
+        axis = vispy.scene.visuals.XYZAxis(parent=self.view.scene)
+        axis.transform = vispy.visuals.transforms.STTransform(scale=(scale, scale, scale))
 
         shading_filter = vispy.visuals.filters.ShadingFilter(
             shading='smooth',
@@ -370,8 +378,17 @@ class Asteroid:
             enabled=False,
         )
         mesh.attach(wireframe_filter)
-
-        self.view.camera = vispy.scene.cameras.TurntableCamera(center=(0, 0, 0))
+        
+        ox, oy, oz = self.o
+        r = np.linalg.norm(self.o)
+        azimuth = 180 - np.degrees(np.arctan2(ox, oy))
+        elevation = np.degrees(np.arcsin(oz / r))
+        self.view.camera = vispy.scene.cameras.TurntableCamera(
+            center=(0, 0, 0),
+            azimuth=azimuth,
+            elevation=elevation,
+            fov=0
+        )
         self.view.camera.depth_value = 1e3
 
         light_dir = -self.s
@@ -404,6 +421,7 @@ class Asteroid:
 
             elif event.key == '2':
                 plot_fluxes(phi=self.phi_e)
+                wireframe_filter.enabled = False
 
             elif event.key == '3':
                 shading_filter.shading = 'flat'

@@ -71,9 +71,6 @@ class ShapeModel:
         self.size = np.max(self.vertices) - np.min(self.vertices)
         if self.size == 0.0:
             raise ValueError("Invalid mesh: size is zero.")
-        
-        # This shrinks the model down so the axis and s/o vectors are visible
-        self.vertices *= 1.9 / self.size
 
         # Invalidate all geometry derived from the previous mesh.
         self.centers = None
