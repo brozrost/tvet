@@ -340,14 +340,16 @@ class Asteroid:
                             color='white', parent=self.canvas.scene)
         ts = vispy.scene.visuals.Text("'s' to screenshot", anchor_x='left', pos=(20, 240), font_size=10,
                             color='white', parent=self.canvas.scene)
-        tq = vispy.scene.visuals.Text("'q' to quit", anchor_x='left', pos=(20, 260), font_size=10,
+        th = vispy.scene.visuals.Text("'h' to toggle overlays", anchor_x='left', pos=(20, 260), font_size=10,
+                            color='white', parent=self.canvas.scene)
+        tq = vispy.scene.visuals.Text("'q' to quit", anchor_x='left', pos=(20, 280), font_size=10,
                             color='white', parent=self.canvas.scene)
         
-        tver = vispy.scene.visuals.Text("Number of vertices: %d" %(len(self.shape.vertices)), anchor_x='left', pos=(20, 300), font_size=10,
+        tver = vispy.scene.visuals.Text("Number of vertices: %d" %(len(self.shape.vertices)), anchor_x='left', pos=(20, 320), font_size=10,
                             color='white', parent=self.canvas.scene)
-        tfac = vispy.scene.visuals.Text("Number of faces: %d" %(len(self.shape.faces)), anchor_x='left', pos=(20, 320), font_size=10,
+        tfac = vispy.scene.visuals.Text("Number of faces: %d" %(len(self.shape.faces)), anchor_x='left', pos=(20, 340), font_size=10,
                             color='white', parent=self.canvas.scene)
-        tsiz = vispy.scene.visuals.Text("Asteroid size: %f" %(self.shape.size), anchor_x='left', pos=(20, 340), font_size=10,
+        tsiz = vispy.scene.visuals.Text("Asteroid size: %f" %(self.shape.size), anchor_x='left', pos=(20, 360), font_size=10,
                             color='white', parent=self.canvas.scene)
         
         scale = self.shape.size / 1.5
@@ -366,6 +368,7 @@ class Asteroid:
         self.overlays.append(tb)
         self.overlays.append(tc)
         self.overlays.append(ts)
+        self.overlays.append(th)
         self.overlays.append(tq)
         self.overlays.append(tver)
         self.overlays.append(tfac)
