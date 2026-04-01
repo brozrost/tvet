@@ -318,45 +318,59 @@ class Asteroid:
 
         s_line = vispy.scene.visuals.Line(pos=np.array([(0, 0, 0), self.shape.size * self.s / 1.5]), color='yellow', parent=self.view.scene)
         o_line = vispy.scene.visuals.Line(pos=np.array([(0, 0, 0), self.shape.size * self.o / 1.5]), color='magenta', parent=self.view.scene)
-        self.overlays.append(s_line)
-        self.overlays.append(o_line)
 
-        vispy.scene.visuals.Text("'1' to show phi_i", anchor_x='left', pos=(20, 20), font_size=10,
+        t1 = vispy.scene.visuals.Text("'1' to show phi_i", anchor_x='left', pos=(20, 20), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'2' to show phi_e", anchor_x='left', pos=(20, 40), font_size=10,
+        t2 = vispy.scene.visuals.Text("'2' to show phi_e", anchor_x='left', pos=(20, 40), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'3' to show the wireframe", anchor_x='left', pos=(20, 60), font_size=10,
+        t3 = vispy.scene.visuals.Text("'3' to show the wireframe", anchor_x='left', pos=(20, 60), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'4' to show normals", anchor_x='left', pos=(20, 80), font_size=10,
+        t4 = vispy.scene.visuals.Text("'4' to show normals", anchor_x='left', pos=(20, 80), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'5' to show flat model", anchor_x='left', pos=(20, 100), font_size=10,
+        t5 = vispy.scene.visuals.Text("'5' to show flat model", anchor_x='left', pos=(20, 100), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'6' to show smooth model", anchor_x='left', pos=(20, 120), font_size=10,
-                            color='white', parent=self.canvas.scene)
-        
-        vispy.scene.visuals.Text("'a' to use Lambert", anchor_x='left', pos=(20, 160), font_size=10,
-                            color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'b' to use Lommel", anchor_x='left', pos=(20, 180), font_size=10,
-                            color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'c' to use Hapke", anchor_x='left', pos=(20, 200), font_size=10,
-                            color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'l' to create a light curve", anchor_x='left', pos=(20, 220), font_size=10,
-                            color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'s' to screenshot", anchor_x='left', pos=(20, 240), font_size=10,
-                            color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("'q' to quit", anchor_x='left', pos=(20, 260), font_size=10,
+        t6 = vispy.scene.visuals.Text("'6' to show smooth model", anchor_x='left', pos=(20, 120), font_size=10,
                             color='white', parent=self.canvas.scene)
         
-        vispy.scene.visuals.Text("Number of vertices: %d" %(len(self.shape.vertices)), anchor_x='left', pos=(20, 300), font_size=10,
+        ta = vispy.scene.visuals.Text("'a' to use Lambert", anchor_x='left', pos=(20, 160), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("Number of faces: %d" %(len(self.shape.faces)), anchor_x='left', pos=(20, 320), font_size=10,
+        tb = vispy.scene.visuals.Text("'b' to use Lommel", anchor_x='left', pos=(20, 180), font_size=10,
                             color='white', parent=self.canvas.scene)
-        vispy.scene.visuals.Text("Asteroid size: %f" %(self.shape.size), anchor_x='left', pos=(20, 340), font_size=10,
+        tc = vispy.scene.visuals.Text("'c' to use Hapke", anchor_x='left', pos=(20, 200), font_size=10,
+                            color='white', parent=self.canvas.scene)
+        ts = vispy.scene.visuals.Text("'s' to screenshot", anchor_x='left', pos=(20, 240), font_size=10,
+                            color='white', parent=self.canvas.scene)
+        tq = vispy.scene.visuals.Text("'q' to quit", anchor_x='left', pos=(20, 260), font_size=10,
+                            color='white', parent=self.canvas.scene)
+        
+        tver = vispy.scene.visuals.Text("Number of vertices: %d" %(len(self.shape.vertices)), anchor_x='left', pos=(20, 300), font_size=10,
+                            color='white', parent=self.canvas.scene)
+        tfac = vispy.scene.visuals.Text("Number of faces: %d" %(len(self.shape.faces)), anchor_x='left', pos=(20, 320), font_size=10,
+                            color='white', parent=self.canvas.scene)
+        tsiz = vispy.scene.visuals.Text("Asteroid size: %f" %(self.shape.size), anchor_x='left', pos=(20, 340), font_size=10,
                             color='white', parent=self.canvas.scene)
         
         scale = self.shape.size / 1.5
         axis = vispy.scene.visuals.XYZAxis(parent=self.view.scene)
         axis.transform = vispy.visuals.transforms.STTransform(scale=(scale, scale, scale))
+
+        self.overlays.append(s_line)
+        self.overlays.append(o_line)
+        self.overlays.append(t1)
+        self.overlays.append(t2)
+        self.overlays.append(t3)
+        self.overlays.append(t4)
+        self.overlays.append(t5)
+        self.overlays.append(t6)
+        self.overlays.append(ta)
+        self.overlays.append(tb)
+        self.overlays.append(tc)
+        self.overlays.append(ts)
+        self.overlays.append(tq)
+        self.overlays.append(tver)
+        self.overlays.append(tfac)
+        self.overlays.append(tsiz)
+        self.overlays.append(axis)
 
         shading_filter = vispy.visuals.filters.ShadingFilter(
             shading='smooth',
@@ -481,8 +495,9 @@ class Asteroid:
                 self.f_func = scattering.f_hapke
                 self.get_fluxes()
 
-            elif event.key == 'l':
-                curve_points = self.get_light_curve()
-                self.plot_light_curve(curve_points)
+            elif event.key == 'h':
+                visible = not self.overlays[0].visible
+                for v in self.overlays:
+                    v.visible = visible
 
         self.canvas.show()
