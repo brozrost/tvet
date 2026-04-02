@@ -8,12 +8,7 @@ class LightCurve:
         f_func=None, 
         start=None, 
         stop=None, 
-        step=None, 
-        l=None,
-        b=None,
-        period=None,
-        epoch=None,
-        phi0=None,
+        step=None
     ):
         if asteroid is None:
             raise ValueError("LightCurve requires an Asteroid instance.")
@@ -23,11 +18,6 @@ class LightCurve:
         self.start = 0 if start is None else start
         self.stop = None if stop is None else stop
         self.step = None if step is None else step
-        self.l = 0.0 if l is None else l
-        self.b = np.pi / 2 if b is None else b
-        self.period = 1.0 if period is None else period
-        self.epoch = 0.0 if epoch is None else epoch
-        self.phi0 = 0.0 if phi0 is None else phi0
 
     def compute(self):
         pass
@@ -42,15 +32,15 @@ class LightCurve:
         if start is None:
             start = self.start
         if l is None:
-            l = self.l
+            l = asteroid.l
         if b is None:
-            b = self.b
+            b = asteroid.b
         if period is None:
-            period = self.period
+            period = asteroid.period
         if epoch is None:
-            epoch = self.epoch
+            epoch = asteroid.epoch
         if phi0 is None:
-            phi0 = self.phi0
+            phi0 = asteroid.phi0
 
         # Checks
         if n is None or int(n) <= 0:
@@ -70,13 +60,13 @@ class LightCurve:
             t = start + period * i/n
             phi1 = 2.0 * np.pi * (t - epoch) / period + phi0
 
-            s_ = asteroid.rotate_z(s, phi1)
-            s_ = asteroid.rotate_y(s_, phi2)
-            s_ = asteroid.rotate_z(s_, phi3)
+            s_ = asteroid._rotate_z(s, phi1)
+            s_ = asteroid._rotate_y(s_, phi2)
+            s_ = asteroid._rotate_z(s_, phi3)
 
-            o_ = asteroid.rotate_z(o, phi1)
-            o_ = asteroid.rotate_y(o_, phi2)
-            o_ = asteroid.rotate_z(o_, phi3)
+            o_ = asteroid._rotate_z(o, phi1)
+            o_ = asteroid._rotate_y(o_, phi2)
+            o_ = asteroid._rotate_z(o_, phi3)
 
             asteroid.get_fluxes(s=s_, o=o_, f_func=f_func)
             total[i, 0] = t

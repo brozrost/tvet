@@ -27,6 +27,12 @@ class Asteroid:
         self.nu_i_C = None
         self.nu_e_C = None
 
+        self.l = 0.0
+        self.b = np.pi / 2
+        self.period = 1.0
+        self.epoch = 0.0
+        self.phi0 = 0.0
+
         # Select scattering function based on CLI argument
         if self.args and hasattr(self.args, "scattering"):
             if self.args.scattering == "lambert":
@@ -81,9 +87,9 @@ class Asteroid:
         return a_
 
     def _match_vector(self, a, start_time):
-        phi1 = 2 * np.pi * (start_time - self.light_curve.epoch) / self.light_curve.period + self.light_curve.phi0
-        phi2 = np.pi / 2 - self.light_curve.b
-        phi3 = self.light_curve.l
+        phi1 = 2 * np.pi * (start_time - self.epoch) / self.period + self.phi0
+        phi2 = np.pi / 2 - self.b
+        phi3 = self.l
 
         # match damits ecliptic coordinates
         eps = (23.0 + 26.0 / 60.0 + (21.406 / 3600.0)) * np.pi / 180
@@ -241,8 +247,7 @@ class Asteroid:
         )
         self.shape.set_mesh(vertices, faces)
 
-        lc = self.light_curve
-        lc.l, lc.b, lc.period, lc.epoch, lc.phi0 = self.damit.fetch_spin(
+        self.l, self.b, self.period, self.epoch, self.phi0 = self.damit.fetch_spin(
             model_id=model_id, 
             timeout=timeout
         )
@@ -251,17 +256,7 @@ class Asteroid:
         pass
 
     def get_light_curve_for_period(self, s=None, o=None, n=100, start=None, period=None, epoch=None, l=None, b=None, phi0=None):
-        return self.light_curve.compute_for_period(
-            s=s,
-            o=o,
-            n=n,
-            start=start,
-            period=period,
-            epoch=epoch,
-            l=l,
-            b=b,
-            phi0=phi0,
-        )
+        return self.light_curve.compute_for_period()
 
     def plot_light_curve(self, curve_points):
         if curve_points is None:
@@ -332,13 +327,13 @@ class Asteroid:
         t6 = vispy.scene.visuals.Text("'6' to show smooth model", anchor_x='left', pos=(20, 120), font_size=10,
                             color='white', parent=self.canvas.scene)
         
-        ta = vispy.scene.visuals.Text("'a' to use Lambert", anchor_x='left', pos=(20, 160), font_size=10,
+        ta = vispy.scene.visuals.Text("'z' to use Lambert", anchor_x='left', pos=(20, 160), font_size=10,
                             color='white', parent=self.canvas.scene)
-        tb = vispy.scene.visuals.Text("'b' to use Lommel", anchor_x='left', pos=(20, 180), font_size=10,
+        tb = vispy.scene.visuals.Text("'x' to use Lommel", anchor_x='left', pos=(20, 180), font_size=10,
                             color='white', parent=self.canvas.scene)
         tc = vispy.scene.visuals.Text("'c' to use Hapke", anchor_x='left', pos=(20, 200), font_size=10,
                             color='white', parent=self.canvas.scene)
-        ts = vispy.scene.visuals.Text("'s' to screenshot", anchor_x='left', pos=(20, 240), font_size=10,
+        ts = vispy.scene.visuals.Text("'p' to screenshot", anchor_x='left', pos=(20, 240), font_size=10,
                             color='white', parent=self.canvas.scene)
         th = vispy.scene.visuals.Text("'h' to toggle overlays", anchor_x='left', pos=(20, 260), font_size=10,
                             color='white', parent=self.canvas.scene)
@@ -376,7 +371,7 @@ class Asteroid:
         self.overlays.append(axis)
 
         shading_filter = vispy.visuals.filters.ShadingFilter(
-            shading='smooth',
+            shading='flat',
             shininess=shininess,
             ambient_coefficient=0.0,
             diffuse_coefficient=1.0,
@@ -386,6 +381,7 @@ class Asteroid:
             specular_light='white',
         )
         mesh.attach(shading_filter)
+        self._previous_shading = 'flat'
 
         wireframe_filter = vispy.visuals.filters.WireframeFilter(
             width=wireframe_width,
@@ -412,8 +408,9 @@ class Asteroid:
         shading_filter.light_dir = light_dir[:3]
 
         def plot_fluxes(phi):
+            self._previous_shading = shading_filter.shading
             shading_filter.shading = None
-            wireframe_filter.enabled = True
+            wireframe_filter.enabled = False
             wireframe_filter.wireframe_only = False
             wireframe_filter.faces_only = False
             normals.visible = False
@@ -429,19 +426,14 @@ class Asteroid:
             if event.key in ['q', 'Q']:
                 vispy.app.quit()
 
-            elif event.key == 's':
-                vispy.io.write_png("out/vispy_screenshot.png", vispy.gloo.util._screenshot())
-
             elif event.key == '1':
                 plot_fluxes(phi=self.phi_i)
-                wireframe_filter.enabled = False
 
             elif event.key == '2':
                 plot_fluxes(phi=self.phi_e)
-                wireframe_filter.enabled = False
 
             elif event.key == '3':
-                shading_filter.shading = 'flat'
+                shading_filter.shading = self._previous_shading
                 wireframe_filter.enabled = True
                 wireframe_filter.wireframe_only = True
                 wireframe_filter.faces_only = False
@@ -449,7 +441,7 @@ class Asteroid:
                 mesh.update()
 
             elif event.key == '4':
-                shading_filter.shading = 'flat'
+                shading_filter.shading = self._previous_shading
                 wireframe_filter.enabled = True
                 wireframe_filter.wireframe_only = False
                 wireframe_filter.faces_only = False
@@ -461,7 +453,7 @@ class Asteroid:
                 mesh.update()
 
             elif event.key == '5':
-                shading_filter.shading = 'flat'
+                shading_filter.shading = self._previous_shading
                 wireframe_filter.enabled = False
                 normals.visible = False
                 face_colors = []
@@ -471,7 +463,7 @@ class Asteroid:
                 mesh.update()
 
             elif event.key == '6':
-                shading_filter.shading = 'smooth'
+                shading_filter.shading = self._previous_shading
                 wireframe_filter.enabled = False
                 normals.visible = False
                 face_colors = []
@@ -480,11 +472,11 @@ class Asteroid:
                 mesh.set_data(self.shape.vertices, self.shape.faces, face_colors=face_colors)
                 mesh.update()
 
-            elif event.key == 'a':
+            elif event.key == 'z':
                 self.f_func = scattering.f_lambert
                 self.get_fluxes()
 
-            elif event.key == 'b':
+            elif event.key == 'x':
                 self.f_func = scattering.f_lommel
                 self.get_fluxes()
 
@@ -498,9 +490,45 @@ class Asteroid:
                 self.f_func = scattering.f_hapke
                 self.get_fluxes()
 
+            elif event.key == 'm':
+                if shading_filter.shading == 'smooth':
+                    shading_filter.shading = 'flat'
+                else: 
+                    shading_filter.shading = 'smooth'
+
+                mesh.update()
+
+            elif event.key == 's':
+                ox, oy, oz = self.s
+                r = np.linalg.norm(self.s)
+                azimuth = 180 - np.degrees(np.arctan2(ox, oy))
+                elevation = np.degrees(np.arcsin(oz / r))
+                self.view.camera = vispy.scene.cameras.TurntableCamera(
+                    center=(0, 0, 0),
+                    azimuth=azimuth,
+                    elevation=elevation,
+                    fov=0
+                )
+
+            elif event.key == 'o':
+                ox, oy, oz = self.o
+                r = np.linalg.norm(self.o)
+                azimuth = 180 - np.degrees(np.arctan2(ox, oy))
+                elevation = np.degrees(np.arcsin(oz / r))
+                self.view.camera = vispy.scene.cameras.TurntableCamera(
+                    center=(0, 0, 0),
+                    azimuth=azimuth,
+                    elevation=elevation,
+                    fov=0
+                )
+
+            elif event.key == 'p':
+                vispy.io.write_png("out/vispy_screenshot.png", vispy.gloo.util._screenshot())
+
             elif event.key == 'h':
                 visible = not self.overlays[0].visible
                 for v in self.overlays:
                     v.visible = visible
 
+        plot_fluxes(self.phi_e)
         self.canvas.show()

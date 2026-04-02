@@ -167,11 +167,11 @@ def main():
 
             io.save_spin(
                 path=os.path.join(out_dir, f"spin_{args.damit_id}.txt"),
-                l=asteroid.light_curve.l, 
-                b=asteroid.light_curve.b, 
-                period=asteroid.light_curve.period, 
-                epoch=asteroid.light_curve.epoch, 
-                phi0=asteroid.light_curve.phi0
+                l=asteroid.l, 
+                b=asteroid.b, 
+                period=asteroid.period, 
+                epoch=asteroid.epoch, 
+                phi0=asteroid.phi0
             )
 
         if not args.quiet:
@@ -182,11 +182,11 @@ def main():
                 f"vertices [{len_v}], " +
                 f"faces [{len_f}]"
             )
-            print(f"Spin:\n{asteroid.light_curve.l} " + 
-                f"{asteroid.light_curve.b} " +
-                f"{asteroid.light_curve.period}\n" +
-                f"{asteroid.light_curve.epoch} " +
-                f"{asteroid.light_curve.phi0}\n"
+            print(f"Spin:\n{asteroid.l} " + 
+                f"{asteroid.b} " +
+                f"{asteroid.period}\n" +
+                f"{asteroid.epoch} " +
+                f"{asteroid.phi0}\n"
             )
 
             if not args.no_save:
@@ -223,11 +223,11 @@ def main():
         if period <= 0.0:
             parser.error(f"--spin PERIOD must be > 0, got: {period}")
 
-        asteroid.light_curve.l = float(np.radians(l))
-        asteroid.light_curve.b = float(np.radians(b))
-        asteroid.light_curve.period = float(period)
-        asteroid.light_curve.epoch = float(epoch)
-        asteroid.light_curve.phi0 = float(phi0)
+        asteroid.l = float(np.radians(l))
+        asteroid.b = float(np.radians(b))
+        asteroid.period = float(period)
+        asteroid.epoch = float(epoch)
+        asteroid.phi0 = float(phi0)
 
     if has_jpl:
         s_unit, o_unit = asteroid.get_ephems(
