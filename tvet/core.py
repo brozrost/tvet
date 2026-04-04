@@ -340,11 +340,11 @@ class Asteroid:
         tq = vispy.scene.visuals.Text("'q' to quit", anchor_x='left', pos=(20, 280), font_size=10,
                             color='white', parent=self.canvas.scene)
         
-        tver = vispy.scene.visuals.Text("Number of vertices: %d" %(len(self.shape.vertices)), anchor_x='left', pos=(20, 320), font_size=10,
+        tver = vispy.scene.visuals.Text(f"Number of vertices: {len(self.shape.vertices)}", anchor_x='left', pos=(20, 320), font_size=10,
                             color='white', parent=self.canvas.scene)
-        tfac = vispy.scene.visuals.Text("Number of faces: %d" %(len(self.shape.faces)), anchor_x='left', pos=(20, 340), font_size=10,
+        tfac = vispy.scene.visuals.Text(f"Number of faces: {len(self.shape.faces)}", anchor_x='left', pos=(20, 340), font_size=10,
                             color='white', parent=self.canvas.scene)
-        tsiz = vispy.scene.visuals.Text("Asteroid size: %f" %(self.shape.size), anchor_x='left', pos=(20, 360), font_size=10,
+        tsiz = vispy.scene.visuals.Text(f"Asteroid size: {self.shape.size}", anchor_x='left', pos=(20, 360), font_size=10,
                             color='white', parent=self.canvas.scene)
         
         scale = self.shape.size / 1.5
@@ -426,6 +426,9 @@ class Asteroid:
             if event.key in ['q', 'Q']:
                 vispy.app.quit()
 
+            elif event.key == 'p':
+                vispy.io.write_png("out/vispy_screenshot.png", vispy.gloo.util._screenshot())
+
             elif event.key == '1':
                 plot_fluxes(phi=self.phi_i)
 
@@ -475,10 +478,12 @@ class Asteroid:
             elif event.key == 'z':
                 self.f_func = scattering.f_lambert
                 self.get_fluxes()
+                plot_fluxes(self.phi_e)
 
             elif event.key == 'x':
                 self.f_func = scattering.f_lommel
                 self.get_fluxes()
+                plot_fluxes(self.phi_e)
 
             elif event.key == 'c':
                 scattering.B0 = 1.32
@@ -489,6 +494,7 @@ class Asteroid:
                 scattering.init_hapke(self.alpha)
                 self.f_func = scattering.f_hapke
                 self.get_fluxes()
+                plot_fluxes(self.phi_e)
 
             elif event.key == 'm':
                 if shading_filter.shading == 'smooth':
