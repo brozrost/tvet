@@ -106,12 +106,14 @@ class Asteroid:
         self.o = self._match_vector(self.o, start_time)
 
         if self.s_array is not None:
-            for vector in self.s_array:
-                self._match_vector(vector, start_time)
+            self.s_array = np.array(
+                [self._match_vector(vector, start_time) for vector in self.s_array], dtype=np.double
+            )
 
         if self.o_array is not None:
-            for vector in self.o_array:
-                self._match_vector(vector, start_time)
+            self.o_array = np.array(
+                [self._match_vector(vector, start_time) for vector in self.o_array], dtype=np.double
+            )
 
     def get_geometry(self):
         if self.shape.vertices is None or self.shape.faces is None:

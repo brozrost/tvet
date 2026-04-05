@@ -3,6 +3,9 @@ import csv
 import io
 import numpy as np
 
+from . import formatting
+from . import conversions
+
 HORIZONS_URL = "https://ssd.jpl.nasa.gov/api/horizons.api"
 
 class HorizonsError(RuntimeError):
@@ -11,9 +14,6 @@ class HorizonsError(RuntimeError):
 class HorizonsClient:
     def __init__(self, *, base_url: str = HORIZONS_URL):
         self.base_url = base_url
-
-    def _format_time(self, time: str) -> str:
-        return time.replace("T", " ")
 
     def _send_request(self, *, params: dict, timeout: float) -> str:
         try:
@@ -95,7 +95,7 @@ class HorizonsClient:
             "EPHEM_TYPE": "VECTORS",
             "COMMAND": f"'{body}'",
             "CENTER": f"'{center}'",
-            "TLIST": f"'{self._format_time(epoch)}'",
+            "TLIST": f"'{formatting.tlist_format(epoch)}'",
             "VEC_TABLE": "'2'",
             "OUT_UNITS": "'KM-S'",
             "CSV_FORMAT": "YES",

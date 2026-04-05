@@ -7,6 +7,7 @@ import vispy.app
 
 from .core import Asteroid
 from . import io
+from . import conversions
 
 def parse_vector(vec_str):
     res = list(map(float, vec_str.split(',')))
@@ -16,9 +17,9 @@ def parse_vector(vec_str):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="TVET CLI - Asteroid Visualization & Analysis",
+        description="TVET CLI - Asteroid Visualization with live ephemerides and light curves.",
         usage="""
-        tvet -h 
+        tvet -h/--help
 
         tvet <obj_file> [options]
             Example: tvet asteroid.obj -l
@@ -91,7 +92,7 @@ def main():
     # Determine mode
     mode_jpl_only = has_jpl and (not has_damit) and (not has_obj)
     mode_damit_only = has_damit and (not has_jpl) and (not has_obj)
-    mode_local_obj = has_obj  # may be combined with --jpl and/or --damit
+    mode_local_obj = has_obj
     mode_jpl_damit = has_jpl and has_damit and (not has_obj)
 
     if not (mode_jpl_only or mode_damit_only or mode_local_obj or mode_jpl_damit):
@@ -230,24 +231,49 @@ def main():
         asteroid.phi0 = float(phi0)
 
     if has_jpl:
-        s_unit, o_unit = asteroid.get_ephems(
-            body=str(args.jpl_id),
-            start_time=args.start_time,
-            stop_time=args.stop_time,
-            step_size=args.step_size,
-            observer_center=args.observer_center,
-            sun_center=args.sun_center,
-            normalize=args.normalize,
-            timeout=args.timeout
-        )
+        if args.stop_time:
+            s_unit, o_unit = asteroid.get_ephems(
+                body=str(args.jpl_id),
+                start_time=args.start_time,
+                stop_time=args.stop_time,
+                step_size=args.step_size,
+                observer_center=args.observer_center,
+                sun_center=args.sun_center,
+                normalize=args.normalize,
+                timeout=args.timeout
+            )
+        else:
+            s_unit, o_unit = asteroid.get_single_ephem(
+                body=str(args.jpl_id),
+                epoch=args.start_time,
+                observer_center=args.observer_center,
+                sun_center=args.sun_center,
+                normalize=args.normalize,
+                timeout=args.timeout
+            )
 
-        asteroid.s_array = s_unit
-        asteroid.o_array = o_unit
+        if s_unit.ndim == 1:
+            asteroid.s = s_unit
+            asteroid.o = o_unit
+            asteroid.s_array = None
+            asteroid.o_array = None
+        else:
+            asteroid.s = s_unit[0]
+            asteroid.o = o_unit[0]
+            asteroid.s_array = s_unit
+            asteroid.o_array = o_unit
 
-        asteroid.s = s_unit[0]
-        asteroid.o = o_unit[0]
+        start_time = args.start_time.strip()
 
-        asteroid.set_body_frame(float(args.start_time[2:]))
+        if start_time[:2].upper() == "JD":
+            epoch = float(start_time[2:])
+        else:
+            try:
+                epoch = float(start_time)
+            except ValueError:
+                epoch = conversions.iso_to_jd(start_time)
+
+        asteroid.set_body_frame(epoch)
 
     if has_damit:
         asteroid.get_damit(model_id=args.damit_id)
