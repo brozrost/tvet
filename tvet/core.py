@@ -659,5 +659,8 @@ class Asteroid:
                 for v in self.overlays:
                     v.visible = visible
 
+            elif event.key == 'l':
+                self.plot_light_curve()
+
         plot_fluxes(self.phi_e)
         self.canvas.show()
