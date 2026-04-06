@@ -4,7 +4,7 @@ import io
 import numpy as np
 
 from . import formatting
-from . import conversions
+from . import vectors
 
 HORIZONS_URL = "https://ssd.jpl.nasa.gov/api/horizons.api"
 
@@ -64,21 +64,6 @@ class HorizonsClient:
             raise HorizonsError(f"Failed to parse XYZ from row: {row}") from exc
         
         return x, y, z
-    
-    def _normalize_vectors(self, vectors: np.ndarray) -> np.ndarray:
-        vectors = np.asarray(vectors, dtype=np.double)
-
-        if vectors.ndim == 1 and vectors.shape[0] == 3:
-            n = np.linalg.norm(vectors)
-            return vectors / (n if n > 0.0 else 1.0)
-
-        if vectors.ndim != 2 or vectors.shape[1] != 3:
-            raise ValueError(f"Expected shape (N,3) or (3,), got {vectors.shape}")
-        
-        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
-        norms = np.where(norms > 0.0, norms, 1.0)
-
-        return vectors / norms
 
     def fetch_single_ephem(
         self,
@@ -191,7 +176,7 @@ class HorizonsClient:
         if not normalize:
             return s, o
         
-        return self._normalize_vectors(s), self._normalize_vectors(o)
+        return vectors.normalize_vectors(s), vectors.normalize_vectors(o)
 
     def fetch_so(
         self,
@@ -238,4 +223,4 @@ class HorizonsClient:
         if not normalize:
             return s, o
         
-        return self._normalize_vectors(s), self._normalize_vectors(o)
+        return vectors.normalize_vectors(s), vectors.normalize_vectors(o)

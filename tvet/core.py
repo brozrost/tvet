@@ -11,6 +11,7 @@ from . import scattering
 from . import horizons
 from . import damit
 from . import lightcurve
+from . import vectors
 from . import _tvet
 
 class Asteroid:
@@ -46,45 +47,14 @@ class Asteroid:
         else:
             self.f_func = scattering.f_lambert
 
+        # Other objects
+
         self.shape = shapemodel.ShapeModel()
         if self.filename is not None:
             self.shape.load_obj(self.filename)
         self.horizons = horizons.HorizonsClient()
         self.damit = damit.DamitClient()
         self.light_curve = lightcurve.LightCurve(self)
-
-    def _rotate_x(self, a, phi):
-        x, y, z = a
-
-        x_ = x
-        y_ = y * np.cos(phi) - z * np.sin(phi)
-        z_ = y * np.sin(phi) + z * np.cos(phi)
-
-        a_ = np.array([x_, y_, z_], dtype=np.double)
-
-        return a_
-
-    def _rotate_y(self, a, phi):
-        x, y, z = a
-
-        x_ = x * np.cos(phi) + z * np.sin(phi)
-        y_ = y
-        z_ = - x * np.sin(phi) + z * np.cos(phi)
-
-        a_ = np.array([x_, y_, z_], dtype=np.double)
-
-        return a_
-
-    def _rotate_z(self, a, phi):
-        x, y, z = a
-
-        x_ = x * np.cos(phi) - y * np.sin(phi)
-        y_ = x * np.sin(phi) + y * np.cos(phi)
-        z_ = z
-
-        a_ = np.array([x_, y_, z_], dtype=np.double)
-
-        return a_
 
     def _match_vector(self, a, start_time):
         phi1 = 2 * np.pi * (start_time - self.epoch) / self.period + self.phi0
@@ -93,11 +63,11 @@ class Asteroid:
 
         # match damits ecliptic coordinates
         eps = (23.0 + 26.0 / 60.0 + (21.406 / 3600.0)) * np.pi / 180
-        a_ = self._rotate_x(a, -eps)
+        a_ = vectors.rotate_x(a, -eps)
 
-        a_ = self._rotate_z(a_, -phi3)
-        a_ = self._rotate_y(a_, -phi2)
-        a_ = self._rotate_z(a_, -phi1)
+        a_ = vectors.rotate_z(a_, -phi3)
+        a_ = vectors.rotate_y(a_, -phi2)
+        a_ = vectors.rotate_z(a_, -phi1)
 
         return a_
 
