@@ -1,5 +1,7 @@
 import numpy as np
 
+from . import vectors
+
 class LightCurve:
     def __init__(
         self, 
@@ -60,13 +62,13 @@ class LightCurve:
             t = start + period * i/n
             phi1 = 2.0 * np.pi * (t - epoch) / period + phi0
 
-            s_ = asteroid._rotate_z(s, phi1)
-            s_ = asteroid._rotate_y(s_, phi2)
-            s_ = asteroid._rotate_z(s_, phi3)
+            s_ = vectors.rotate_z(s, phi1)
+            s_ = vectors.rotate_y(s_, phi2)
+            s_ = vectors.rotate_z(s_, phi3)
 
-            o_ = asteroid._rotate_z(o, phi1)
-            o_ = asteroid._rotate_y(o_, phi2)
-            o_ = asteroid._rotate_z(o_, phi3)
+            o_ = vectors.rotate_z(o, phi1)
+            o_ = vectors.rotate_y(o_, phi2)
+            o_ = vectors.rotate_z(o_, phi3)
 
             asteroid.get_fluxes(s=s_, o=o_, f_func=f_func)
             total[i, 0] = t
