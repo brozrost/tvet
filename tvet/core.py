@@ -62,6 +62,8 @@ class Asteroid:
         self.damit = damit.DamitClient()
         self.light_curve = lightcurve.LightCurve(self)
 
+    # MARK: - _match_vector()
+
     def _match_vector(self, a, time, lite):
         phi1 = 2 * np.pi * (time + lite - self.epoch) / self.period + self.phi0
         phi2 = np.pi / 2 - self.b
@@ -76,6 +78,8 @@ class Asteroid:
         a_ = vectors.rotate_z(a_, -phi1)
 
         return a_
+
+    # MARK: - set_body_frame()
 
     def set_body_frame(self, start_time):
         self.s = self._match_vector(self.s, start_time, self.lite)
@@ -97,10 +101,14 @@ class Asteroid:
                 dtype=np.double
             )
 
+    # MARK: - get_geometry()
+
     def get_geometry(self):
         if self.shape.vertices is None or self.shape.faces is None:
             raise ValueError("Geometry not available: no mesh loaded.")
         self.shape.compute_geometry()
+
+    # MARK: - get_cosines()
 
     def get_cosines(self, s=None, o=None):
         self.get_geometry()
@@ -152,6 +160,8 @@ class Asteroid:
         self.nu_i = self.nu_i_C
         self.nu_e = self.nu_e_C
 
+    # MARK: - get_fluxes()
+
     def get_fluxes(self, s=None, o=None, f_func=None):
         if s is None: 
             s = self.s
@@ -177,6 +187,8 @@ class Asteroid:
 
         self.total = np.sum(self.phi_e)
 
+    # MARK: - get_single_ephem()
+
     def get_single_ephem(
         self,
         *,
@@ -195,6 +207,8 @@ class Asteroid:
             normalize=normalize,
             timeout=timeout
         )
+    
+    # MARK: - get_ephems()
 
     def get_ephems(
         self,
@@ -219,6 +233,8 @@ class Asteroid:
             timeout=timeout
         )
     
+    # MARK: - get_damit()
+    
     def get_damit(
         self,
         *,
@@ -236,8 +252,12 @@ class Asteroid:
             timeout=timeout
         )
     
+    # MARK: - get_light_curve()
+
     def get_light_curve(self):
         pass
+
+    # MARK: - get_light_curve_for_period()
 
     def get_light_curve_for_period(
         self, 
@@ -262,6 +282,8 @@ class Asteroid:
             b=b, 
             phi0=phi0
         )
+    
+    # MARK: - plot_light_curve()
 
     def plot_light_curve(self, curve_points=None):
         if curve_points is None:
