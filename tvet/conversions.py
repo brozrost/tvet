@@ -6,6 +6,8 @@ MONTHS = {
     "sep": 9, "oct": 10, "nov": 11, "dec": 12
 }
 
+# MARK: - iso_to_jd()
+
 def iso_to_jd(iso: str) -> float:
     iso = iso.strip()
 
@@ -68,6 +70,8 @@ def iso_to_jd(iso: str) -> float:
     jd = jdn + (dt.hour - 12) / 24 + dt.minute / 1440
 
     return jd
+
+# MARK: - jd_to_iso()
 
 def jd_to_iso(jd: float) -> str:
     if not isinstance(jd, (int, float)):
