@@ -14,6 +14,8 @@ from . import lightcurve
 from . import vectors
 from . import _tvet
 
+# MARK: - class Asteroid
+
 class Asteroid:
     def __init__(self, args=None, filename=None):
         self.args = args
@@ -101,7 +103,7 @@ class Asteroid:
         self.shape.compute_geometry()
 
     def get_cosines(self, s=None, o=None):
-        self.shape.compute_geometry()
+        self.get_geometry()
 
         if s is None: 
             s = self.s
@@ -316,18 +318,9 @@ class Asteroid:
         )
         normals.visible = False
 
-        self.overlays = []
+        # MARK: - Overlays
 
-        s_line = vispy.scene.visuals.Line(
-            pos=np.array([(0, 0, 0), self.shape.size * self.s / 1.5]), 
-            color='yellow', 
-            parent=self.view.scene
-        )
-        o_line = vispy.scene.visuals.Line(
-            pos=np.array([(0, 0, 0), self.shape.size * self.o / 1.5]), 
-            color='magenta', 
-            parent=self.view.scene
-        )
+        self.overlays = []
 
         t1 = vispy.scene.visuals.Text(
             "'1' to show phi_i", 
@@ -338,7 +331,7 @@ class Asteroid:
             parent=self.canvas.scene
         )
         t2 = vispy.scene.visuals.Text(
-            "'2' to show phi_e", 
+            "'2' to show phi_e with Lambert", 
             anchor_x='left', 
             pos=(20, 40), 
             font_size=10,
@@ -346,7 +339,7 @@ class Asteroid:
             parent=self.canvas.scene
         )
         t3 = vispy.scene.visuals.Text(
-            "'3' to show the wireframe", 
+            "'3' to show phi_e with Lommel", 
             anchor_x='left', 
             pos=(20, 60), 
             font_size=10,
@@ -354,7 +347,7 @@ class Asteroid:
             parent=self.canvas.scene
         )
         t4 = vispy.scene.visuals.Text(
-            "'4' to show normals", 
+            "'4' to show phi_e with Hapke", 
             anchor_x='left', 
             pos=(20, 80), 
             font_size=10,
@@ -362,7 +355,7 @@ class Asteroid:
             parent=self.canvas.scene
         )
         t5 = vispy.scene.visuals.Text(
-            "'5' to show flat model", 
+            "'5' to show the wireframe", 
             anchor_x='left', 
             pos=(20, 100), 
             font_size=10,
@@ -377,35 +370,28 @@ class Asteroid:
             color='white', 
             parent=self.canvas.scene
         )
-        
-        tz = vispy.scene.visuals.Text(
-            "'z' to use Lambert", 
+
+        ts = vispy.scene.visuals.Text(
+            "'s' to view from light direction", 
             anchor_x='left', 
             pos=(20, 160), 
             font_size=10,
             color='white', 
             parent=self.canvas.scene
         )
-        tx = vispy.scene.visuals.Text(
-            "'x' to use Lommel", 
+        to = vispy.scene.visuals.Text(
+            "'o' to view from observer direction", 
             anchor_x='left', 
             pos=(20, 180), 
             font_size=10,
             color='white', 
             parent=self.canvas.scene
         )
-        tc = vispy.scene.visuals.Text(
-            "'c' to use Hapke", 
-            anchor_x='left', 
-            pos=(20, 200), 
-            font_size=10,
-            color='white', 
-            parent=self.canvas.scene
-        )
-        ts = vispy.scene.visuals.Text(
+        
+        tp = vispy.scene.visuals.Text(
             "'p' to screenshot", 
             anchor_x='left', 
-            pos=(20, 240), 
+            pos=(20, 220), 
             font_size=10,
             color='white', 
             parent=self.canvas.scene
@@ -413,7 +399,7 @@ class Asteroid:
         th = vispy.scene.visuals.Text(
             "'h' to toggle overlays", 
             anchor_x='left', 
-            pos=(20, 260), 
+            pos=(20, 240), 
             font_size=10,
             color='white', 
             parent=self.canvas.scene
@@ -421,7 +407,7 @@ class Asteroid:
         tq = vispy.scene.visuals.Text(
             "'q' to quit", 
             anchor_x='left', 
-            pos=(20, 280), 
+            pos=(20, 260), 
             font_size=10,
             color='white', 
             parent=self.canvas.scene
@@ -430,7 +416,7 @@ class Asteroid:
         tver = vispy.scene.visuals.Text(
             f"Number of vertices: {len(self.shape.vertices)}", 
             anchor_x='left', 
-            pos=(20, 320), 
+            pos=(20, 300), 
             font_size=10,
             color='white', 
             parent=self.canvas.scene
@@ -438,7 +424,7 @@ class Asteroid:
         tfac = vispy.scene.visuals.Text(
             f"Number of faces: {len(self.shape.faces)}", 
             anchor_x='left', 
-            pos=(20, 340), 
+            pos=(20, 320), 
             font_size=10,
             color='white', 
             parent=self.canvas.scene
@@ -446,36 +432,92 @@ class Asteroid:
         tsiz = vispy.scene.visuals.Text(
             f"Asteroid size: {self.shape.size}", 
             anchor_x='left', 
-            pos=(20, 360), 
+            pos=(20, 340), 
             font_size=10,
             color='white', 
             parent=self.canvas.scene
         )
         
-        scale = self.shape.size / 1.5
+        # MARK: - Axis and so vectors
+
+        scale = self.shape.size / 1.8
+
+        s_line = vispy.scene.visuals.Line(
+            pos=np.array([(0, 0, 0), scale * self.s]), 
+            color='yellow', 
+            parent=self.view.scene
+        )
+        o_line = vispy.scene.visuals.Line(
+            pos=np.array([(0, 0, 0), scale * self.o]), 
+            color='magenta', 
+            parent=self.view.scene
+        )
+
         axis = vispy.scene.visuals.XYZAxis(parent=self.view.scene)
         axis.transform = vispy.visuals.transforms.STTransform(
             scale=(scale, scale, scale)
         )
 
-        self.overlays.append(s_line)
-        self.overlays.append(o_line)
+        s_label = vispy.scene.visuals.Text(
+            "s",
+            pos=scale * self.s + 5 * self.s,
+            color='white',
+            font_size=8,
+            parent=self.view.scene
+        )
+        o_label = vispy.scene.visuals.Text(
+            "o",
+            pos=scale * self.o + 5 * self.o,
+            color='white',
+            font_size=8,
+            parent=self.view.scene
+        )
+        x_label = vispy.scene.visuals.Text(
+            "x",
+            pos=(scale + 5, 0, 0),
+            color='white',
+            font_size=8,
+            parent=self.view.scene
+        )
+        y_label = vispy.scene.visuals.Text(
+            "y",
+            pos=(0, scale + 5, 0),
+            color='white',
+            font_size=8,
+            parent=self.view.scene
+        )
+        z_label = vispy.scene.visuals.Text(
+            "z",
+            pos=(0, 0, scale + 5),
+            color='white',
+            font_size=8,
+            parent=self.view.scene
+        )
+
         self.overlays.append(t1)
         self.overlays.append(t2)
         self.overlays.append(t3)
         self.overlays.append(t4)
         self.overlays.append(t5)
         self.overlays.append(t6)
-        self.overlays.append(tz)
-        self.overlays.append(tx)
-        self.overlays.append(tc)
         self.overlays.append(ts)
+        self.overlays.append(to)
+        self.overlays.append(tp)
         self.overlays.append(th)
         self.overlays.append(tq)
         self.overlays.append(tver)
         self.overlays.append(tfac)
         self.overlays.append(tsiz)
+        self.overlays.append(s_line)
+        self.overlays.append(o_line)
         self.overlays.append(axis)
+        self.overlays.append(s_label)
+        self.overlays.append(o_label)
+        self.overlays.append(x_label)
+        self.overlays.append(y_label)
+        self.overlays.append(z_label)
+
+        # MARK: - Filters
 
         shading_filter = vispy.visuals.filters.ShadingFilter(
             shading='flat',
@@ -515,7 +557,6 @@ class Asteroid:
         shading_filter.light_dir = light_dir[:3]
 
         def plot_fluxes(phi):
-            self._previous_shading = shading_filter.shading
             shading_filter.shading = None
             wireframe_filter.enabled = False
             wireframe_filter.wireframe_only = False
@@ -534,6 +575,8 @@ class Asteroid:
             )
             mesh.update()
 
+        # MARK: - on_key_press()
+
         @self.canvas.events.key_press.connect
         def on_key_press(event):
             if event.key in ['q', 'Q']:
@@ -549,77 +592,16 @@ class Asteroid:
                 plot_fluxes(phi=self.phi_i)
 
             elif event.key == '2':
-                plot_fluxes(phi=self.I)
-
-            elif event.key == '3':
-                shading_filter.shading = self._previous_shading
-                wireframe_filter.enabled = True
-                wireframe_filter.wireframe_only = True
-                wireframe_filter.faces_only = False
-                normals.visible = False
-                mesh.update()
-
-            elif event.key == '4':
-                shading_filter.shading = self._previous_shading
-                wireframe_filter.enabled = True
-                wireframe_filter.wireframe_only = False
-                wireframe_filter.faces_only = False
-                normals.visible = True
-
-                face_colors = []
-                for i in range(len(self.shape.faces)):
-                    face_colors.append(np.array([1, 1, 1]))
-
-                mesh.set_data(
-                    self.shape.vertices, 
-                    self.shape.faces, 
-                    face_colors=face_colors
-                )
-                mesh.update()
-
-            elif event.key == '5':
-                shading_filter.shading = self._previous_shading
-                wireframe_filter.enabled = False
-                normals.visible = False
-
-                face_colors = []
-                for i in range(len(self.shape.faces)):
-                    face_colors.append(np.array([1, 1, 1]))
-
-                mesh.set_data(
-                    self.shape.vertices, 
-                    self.shape.faces, 
-                    face_colors=face_colors
-                )
-                mesh.update()
-
-            elif event.key == '6':
-                shading_filter.shading = self._previous_shading
-                wireframe_filter.enabled = False
-                normals.visible = False
-
-                face_colors = []
-                for i in range(len(self.shape.faces)):
-                    face_colors.append(np.array([1, 1, 1]))
-
-                mesh.set_data(
-                    self.shape.vertices, 
-                    self.shape.faces, 
-                    face_colors=face_colors
-                )
-                mesh.update()
-
-            elif event.key == 'z':
                 self.f_func = scattering.f_lambert
                 self.get_fluxes()
                 plot_fluxes(self.phi_e)
 
-            elif event.key == 'x':
+            elif event.key == '3':
                 self.f_func = scattering.f_lommel
                 self.get_fluxes()
                 plot_fluxes(self.phi_e)
 
-            elif event.key == 'c':
+            elif event.key == '4':
                 scattering.B0 = 1.32
                 scattering.minh = 0.20
                 scattering.ming = -0.35
@@ -630,12 +612,26 @@ class Asteroid:
                 self.get_fluxes()
                 plot_fluxes(self.phi_e)
 
-            elif event.key == 'm':
-                if shading_filter.shading == 'smooth':
-                    shading_filter.shading = 'flat'
-                else: 
-                    shading_filter.shading = 'smooth'
+            elif event.key == '5':
+                shading_filter.shading = 'flat'
+                wireframe_filter.enabled = True
+                wireframe_filter.wireframe_only = True
+                wireframe_filter.faces_only = False
+                normals.visible = False
+                mesh.update()
 
+            elif event.key == '6':
+                shading_filter.shading = 'smooth'
+                wireframe_filter.enabled = False
+                normals.visible = False
+
+                face_colors = np.ones((len(self.shape.faces), 3), dtype=np.double)
+
+                mesh.set_data(
+                    self.shape.vertices, 
+                    self.shape.faces, 
+                    face_colors=face_colors
+                )
                 mesh.update()
 
             elif event.key == 's':
