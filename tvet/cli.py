@@ -108,7 +108,7 @@ def main():
 
     if mode_jpl_only:
         if args.stop_time:
-            s_unit, o_unit = asteroid.get_ephems(
+            s, o, d, lite = asteroid.get_ephems(
                 body=str(args.jpl_id),
                 start_time=args.start_time,
                 stop_time=args.stop_time,
@@ -119,9 +119,9 @@ def main():
                 timeout=args.timeout
             )
 
-            data = np.hstack([s_unit, o_unit])
+            data = np.hstack([s, o])
         else:
-            s_unit, o_unit = asteroid.get_single_ephem(
+            s, o, d, lite = asteroid.get_single_ephem(
                 body=str(args.jpl_id),
                 epoch=args.start_time,
                 observer_center=args.observer_center,
@@ -130,7 +130,7 @@ def main():
                 timeout=args.timeout
             )
 
-            data = np.hstack([s_unit, o_unit]).reshape(1, 6)
+            data = np.hstack([s, o]).reshape(1, 6)
 
             if args.verbose > 0:
                 args.verbose = 1
@@ -139,7 +139,9 @@ def main():
             np.savetxt(os.path.join(out_dir, "ephemerides.txt"), data, header="sx sy sz ox oy oz")
 
         if not args.quiet:
-            print(f"\nEphemerides: body [{args.jpl_id}] points [{data.shape[0]}]\n")
+            print(f"\nEphemerides: body [{args.jpl_id}] points [{data.shape[0]}]")
+            print(f"Observer distance:  {d/149597870700.0} AU")
+            print(f"Light-time effect:  {lite} days\n")
 
             if not args.no_save:
                 print(f"Saved vectors to {out_dir}/ephemerides.txt\n")
@@ -232,7 +234,7 @@ def main():
 
     if has_jpl:
         if args.stop_time:
-            s_unit, o_unit = asteroid.get_ephems(
+            s, o, d, lite = asteroid.get_ephems(
                 body=str(args.jpl_id),
                 start_time=args.start_time,
                 stop_time=args.stop_time,
@@ -243,7 +245,7 @@ def main():
                 timeout=args.timeout
             )
         else:
-            s_unit, o_unit = asteroid.get_single_ephem(
+            s, o, d, lite = asteroid.get_single_ephem(
                 body=str(args.jpl_id),
                 epoch=args.start_time,
                 observer_center=args.observer_center,
@@ -252,16 +254,24 @@ def main():
                 timeout=args.timeout
             )
 
-        if s_unit.ndim == 1:
-            asteroid.s = s_unit
-            asteroid.o = o_unit
+        if s.ndim == 1:
+            asteroid.s = s
+            asteroid.o = o
+            asteroid.d = d
+            asteroid.lite = lite
             asteroid.s_array = None
             asteroid.o_array = None
+            asteroid.d_array = None
+            asteroid.lite_array = None
         else:
-            asteroid.s = s_unit[0]
-            asteroid.o = o_unit[0]
-            asteroid.s_array = s_unit
-            asteroid.o_array = o_unit
+            asteroid.s = s[0]
+            asteroid.o = o[0]
+            asteroid.d = d[0]
+            asteroid.lite = lite[0]
+            asteroid.s_array = s
+            asteroid.o_array = o
+            asteroid.d_array = d
+            asteroid.lite_array = lite
 
         start_time = args.start_time.strip()
 

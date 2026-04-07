@@ -7,6 +7,10 @@ from . import formatting
 from . import vectors
 
 HORIZONS_URL = "https://ssd.jpl.nasa.gov/api/horizons.api"
+C_LIGHT = 299792458 # m/s
+AU = 149597870700.0 # m
+DAY = 86400 # s
+KM = 1000 # m
 
 class HorizonsError(RuntimeError):
     pass
@@ -172,11 +176,14 @@ class HorizonsClient:
 
         if o.shape != (3,) or s.shape != (3,):
             raise HorizonsError(f"Single vector shape mismatch: o={o.shape}, s={s.shape}")
-        
+
+        d = np.linalg.norm(o) * KM
+        lite = -d / C_LIGHT / DAY
+
         if not normalize:
-            return s, o
+            return s, o, d, lite
         
-        return vectors.normalize_vectors(s), vectors.normalize_vectors(o)
+        return vectors.normalize_vectors(s), vectors.normalize_vectors(o), d, lite
 
     def fetch_so(
         self,
@@ -219,8 +226,11 @@ class HorizonsClient:
             raise HorizonsError("Empty ephemerides arrays returned.")
         if o.shape != s.shape:
             raise HorizonsError(f"Ephemerides shape mismatch: o={o.shape}, s={s.shape}")
+        
+        d = np.linalg.norm(o, axis=1) * KM
+        lite = -d / C_LIGHT / DAY
 
         if not normalize:
-            return s, o
+            return s, o, d, lite
         
-        return vectors.normalize_vectors(s), vectors.normalize_vectors(o)
+        return vectors.normalize_vectors(s), vectors.normalize_vectors(o), d, lite

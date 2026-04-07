@@ -34,6 +34,11 @@ class Asteroid:
         self.epoch = 0.0
         self.phi0 = 0.0
 
+        self.d = None
+        self.d_array = None
+        self.lite = None
+        self.lite_array = None
+
         # Select scattering function based on CLI argument
         if self.args and hasattr(self.args, "scattering"):
             if self.args.scattering == "lambert":
@@ -48,7 +53,6 @@ class Asteroid:
             self.f_func = scattering.f_lambert
 
         # Other objects
-
         self.shape = shapemodel.ShapeModel()
         if self.filename is not None:
             self.shape.load_obj(self.filename)
@@ -56,8 +60,8 @@ class Asteroid:
         self.damit = damit.DamitClient()
         self.light_curve = lightcurve.LightCurve(self)
 
-    def _match_vector(self, a, start_time):
-        phi1 = 2 * np.pi * (start_time - self.epoch) / self.period + self.phi0
+    def _match_vector(self, a, time, lite):
+        phi1 = 2 * np.pi * (time + lite - self.epoch) / self.period + self.phi0
         phi2 = np.pi / 2 - self.b
         phi3 = self.l
 
@@ -72,18 +76,22 @@ class Asteroid:
         return a_
 
     def set_body_frame(self, start_time):
-        self.s = self._match_vector(self.s, start_time)
-        self.o = self._match_vector(self.o, start_time)
+        self.s = self._match_vector(self.s, start_time, self.lite)
+        self.o = self._match_vector(self.o, start_time, self.lite)
 
         if self.s_array is not None:
-            self.s_array = np.array(
-                [self._match_vector(vector, start_time) for vector in self.s_array], 
+            self.s_array = np.array([
+                    self._match_vector(vector, start_time, self.lite_array[i]) 
+                    for i, vector in enumerate(self.s_array)
+                ],
                 dtype=np.double
             )
 
         if self.o_array is not None:
-            self.o_array = np.array(
-                [self._match_vector(vector, start_time) for vector in self.o_array], 
+            self.o_array = np.array([
+                    self._match_vector(vector, start_time, self.lite_array[i]) 
+                    for i, vector in enumerate(self.o_array)
+                ],
                 dtype=np.double
             )
 
@@ -162,8 +170,8 @@ class Asteroid:
             f.append(f_func(self.f_L, self.mu_i[i], self.mu_e[i], self.alpha))
         self.f = np.array(f)
 
-        self.I = self.f * self.phi_i
-        self.phi_e = self.I * self.mu_e * self.nu_e
+        self.I = self.f * self.phi_i * self.nu_e
+        self.phi_e = self.I * self.mu_e 
 
         self.total = np.sum(self.phi_e)
 
@@ -514,7 +522,7 @@ class Asteroid:
             wireframe_filter.faces_only = False
             normals.visible = False
 
-            color = np.array([0.5, 0.5, 0.5]) / np.percentile(phi, 99)
+            color = np.array([1, 1, 1]) / np.percentile(phi, 99)
             face_colors = []
             for face in phi:
                 face_colors.append(face * color)
@@ -541,7 +549,7 @@ class Asteroid:
                 plot_fluxes(phi=self.phi_i)
 
             elif event.key == '2':
-                plot_fluxes(phi=self.phi_e)
+                plot_fluxes(phi=self.I)
 
             elif event.key == '3':
                 shading_filter.shading = self._previous_shading
@@ -560,7 +568,7 @@ class Asteroid:
 
                 face_colors = []
                 for i in range(len(self.shape.faces)):
-                    face_colors.append(np.array([0.6, 0.6, 0.6]))
+                    face_colors.append(np.array([1, 1, 1]))
 
                 mesh.set_data(
                     self.shape.vertices, 
@@ -576,7 +584,7 @@ class Asteroid:
 
                 face_colors = []
                 for i in range(len(self.shape.faces)):
-                    face_colors.append(np.array([0.6, 0.6, 0.6]))
+                    face_colors.append(np.array([1, 1, 1]))
 
                 mesh.set_data(
                     self.shape.vertices, 
@@ -592,7 +600,7 @@ class Asteroid:
 
                 face_colors = []
                 for i in range(len(self.shape.faces)):
-                    face_colors.append(np.array([0.6, 0.6, 0.6]))
+                    face_colors.append(np.array([1, 1, 1]))
 
                 mesh.set_data(
                     self.shape.vertices, 
@@ -659,5 +667,5 @@ class Asteroid:
                 for v in self.overlays:
                     v.visible = visible
 
-        plot_fluxes(self.phi_e)
+        plot_fluxes(self.I)
         self.canvas.show()
