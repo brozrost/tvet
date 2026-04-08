@@ -15,9 +15,13 @@ KM = 1000 # m
 class HorizonsError(RuntimeError):
     pass
 
+# MARK: - class HorizonsClient
+
 class HorizonsClient:
     def __init__(self, *, base_url: str = HORIZONS_URL):
         self.base_url = base_url
+
+    # MARK: - _send_request()
 
     def _send_request(self, *, params: dict, timeout: float) -> str:
         try:
@@ -41,6 +45,8 @@ class HorizonsClient:
 
         return data["result"]
     
+    # MARK: - _extract_lines()
+    
     def _extract_lines(self, *, text: str) -> list[str]:
         start = text.find("$$SOE")
         end = text.find("$$EOE")
@@ -52,6 +58,8 @@ class HorizonsClient:
 
         return lines
     
+    # MARK: - _parse_row()
+
     def _parse_row(self, row: list[str]) -> tuple[float, float, float]:
         # Drop trailing comma
         if row and row[-1].strip() == "":
@@ -68,6 +76,8 @@ class HorizonsClient:
             raise HorizonsError(f"Failed to parse XYZ from row: {row}") from exc
         
         return x, y, z
+    
+    # MARK: - fetch_single_ephem()
 
     def fetch_single_ephem(
         self,
@@ -105,6 +115,8 @@ class HorizonsClient:
         x, y, z = self._parse_row(row)
 
         return np.array([x, y, z], dtype=np.double)
+
+    # MARK: - fetch_ephems()
 
     def fetch_ephems(
         self,
@@ -147,6 +159,8 @@ class HorizonsClient:
 
         return np.asarray(xyz, dtype=np.double)
     
+    # MARK: fetch_single_so()
+    
     def fetch_single_so(
         self,
         *,
@@ -184,6 +198,8 @@ class HorizonsClient:
             return s, o, d, lite
         
         return vectors.normalize_vectors(s), vectors.normalize_vectors(o), d, lite
+
+    # MARK: - fetch_so()
 
     def fetch_so(
         self,

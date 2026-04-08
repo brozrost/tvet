@@ -1,7 +1,6 @@
 from . import conversions
 
-def strip_T(time: str) -> str:
-    return time.replace("T", " ")
+# MARK: - tlist_format()
 
 def tlist_format(value: str) -> str:
     value = value.strip()

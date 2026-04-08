@@ -2,6 +2,8 @@ import numpy as np
 
 from . import io
 
+# MARK: - class ShapeModel
+
 class ShapeModel:
     """
     Store a triangular mesh together with derived per-face geometric data.
@@ -39,9 +41,11 @@ class ShapeModel:
         # Guard against recomputing geometry
         self._geometry_ready = False
 
+    # MARK: - set_mesh()
+
     def set_mesh(self, vertices, faces):
         """
-        Store mesh data and normalize its scale for visualization.
+        ### Store mesh data and normalize its scale for visualization.
 
         The input arrays are converted to the expected dtypes:
         - vertices -> np.double
@@ -86,6 +90,8 @@ class ShapeModel:
 
         self._geometry_ready = False
 
+    # MARK: - load_obj()
+
     def load_obj(self, filename: str):
         """
         Load a mesh from an OBJ file and store it in this shape model.
@@ -101,6 +107,8 @@ class ShapeModel:
         vertices, faces = io.load_obj_file(filename)
         self.set_mesh(vertices, faces)
         
+    # MARK: - compute_geometry()
+
     def compute_geometry(self):
         """
         Compute per-face centers, unit normals, and contiguous working arrays.

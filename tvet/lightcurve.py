@@ -2,6 +2,8 @@ import numpy as np
 
 from . import vectors
 
+# MARK: - class LightCurve()
+
 class LightCurve:
     def __init__(
         self, 
@@ -21,8 +23,12 @@ class LightCurve:
         self.stop = None if stop is None else stop
         self.step = None if step is None else step
 
+    # MARK: - compute()
+
     def compute(self):
         pass
+
+    # MARK: - compute_for_period()
 
     def compute_for_period(self, s=None, o=None, n=100, start=None, l=None, b=None, period=None, epoch=None, phi0=None):
         asteroid = self.asteroid

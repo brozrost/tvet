@@ -1,5 +1,7 @@
 import numpy as np
 
+# MARK: - normalize_vectors()
+
 def normalize_vectors(vectors: np.ndarray) -> np.ndarray:
     vectors = np.asarray(vectors, dtype=np.double)
 
@@ -15,6 +17,8 @@ def normalize_vectors(vectors: np.ndarray) -> np.ndarray:
 
     return vectors / norms
 
+# MARK: - rotate_x()
+
 def rotate_x(a, phi):
     x, y, z = a
 
@@ -26,6 +30,8 @@ def rotate_x(a, phi):
 
     return a_
 
+# MARK: - rotate_y()
+
 def rotate_y(a, phi):
     x, y, z = a
 
@@ -36,6 +42,8 @@ def rotate_y(a, phi):
     a_ = np.array([x_, y_, z_], dtype=np.double)
 
     return a_
+
+# MARK: - rotate_z()
 
 def rotate_z(a, phi):
     x, y, z = a

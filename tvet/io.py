@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 import numpy as np
+
+# MARK: - load_ele_file()
 
 def load_ele_file(filename, debug=False): 
     '''Load an ELE file.'''
@@ -26,6 +26,8 @@ def load_ele_file(filename, debug=False):
 
     return ele
 
+# MARK: - load_node_file()
+
 def load_node_file(filename, debug=False): 
     '''Load a NODE file.'''
     
@@ -50,6 +52,8 @@ def load_node_file(filename, debug=False):
 
     return node
 
+# MARK: - load_face_file()
+
 def load_face_file(filename, debug=False): 
     '''Load a FACE file.'''
 
@@ -73,6 +77,8 @@ def load_face_file(filename, debug=False):
        print("number of faces = " + str(len(face)) + ", beginning with face " + str(face[0]))
 
     return face
+
+# MARK: - load_obj_file()
 
 def load_obj_file(filename, debug=False):
     '''Load a Wavefront OBJ file.''' 
@@ -103,6 +109,8 @@ def load_obj_file(filename, debug=False):
 
     return np.array(node), np.array(face)
 
+# MARK: - save_obj_file()
+
 def save_obj_file(*, path: str, vertices, faces):
     with open(path, "w", encoding="utf-8") as f:
         for x, y, z in vertices:
@@ -111,9 +119,13 @@ def save_obj_file(*, path: str, vertices, faces):
         for i, j, k in faces:
             f.write(f"f {i + 1} {j + 1} {k + 1}\n")
 
+# MARK: - save_spin()
+
 def save_spin(*, path: str, l, b, period, epoch, phi0):
     with open(path, "w", encoding="utf-8") as f:
         f.write(f"{l} {b} {period}\n{epoch} {phi0}")
+
+# MARK: - check_filetype()
 
 def check_filetype(filename):
     for index, character in enumerate(filename):
@@ -122,12 +134,3 @@ def check_filetype(filename):
                 return True
             else:
                 return False
-
-def main():
-    ele = load_ele_file("src/sample_files/tri_file_octdecv_1.1.ele", True)
-    node = load_node_file("src/sample_files/tri_file_octdecv_1.1.node", True)
-    face = load_face_file("src/sample_files/tri_file_octdecv_1.1.face", True)
-    obj_node, obj_face = load_obj_file("src/sample_files/tri_file_octdecv_1.obj", True)
-
-if __name__ == "__main__": 
-    main()
