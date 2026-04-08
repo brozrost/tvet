@@ -6,9 +6,13 @@ DAMIT_URL = "https://damit.cuni.cz/generated_files/open/AsteroidModel"
 class DamitError(RuntimeError):
     pass
 
+# MARK: - class DamitClient
+
 class DamitClient:
     def __init__(self, *, base_url: str = DAMIT_URL):
         self.base_url = base_url
+
+    # MARK: - fetch_text()
 
     def fetch_text(self, url: str, *, timeout: float) -> str:
         try:
@@ -23,6 +27,8 @@ class DamitClient:
             raise DamitError(f"Empty response from {url}")
         
         return response.text
+
+    # MARK: - fetch_obj()
 
     def fetch_obj(self, *, model_id: int | str, timeout: float = 30.0):
         url = f"{self.base_url}/{model_id}/shape.obj"
@@ -48,6 +54,8 @@ class DamitClient:
             raise DamitError(f"No faces found in shape.obj for model_id={model_id}")
 
         return vertices, faces
+    
+    # MARK: - fetch_spin()
 
     def fetch_spin(self, *, model_id: int | str, timeout: float = 30.0):
         url = f"{self.base_url}/{model_id}/spin.txt"
