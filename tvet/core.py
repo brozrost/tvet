@@ -62,6 +62,8 @@ class Asteroid:
         self.damit = damit.DamitClient()
         self.light_curve = lightcurve.LightCurve(self)
 
+        self._cosines_ready = False
+
     # MARK: - _match_vector()
 
     def _match_vector(self, a, time, lite):
@@ -108,9 +110,22 @@ class Asteroid:
             raise ValueError("Geometry not available: no mesh loaded.")
         self.shape.compute_geometry()
 
+    def get_alpha(self, s=None, o=None):
+        if s is None:
+            s = self.s
+        if o is None:
+            o = self.o
+
+        a = np.dot(s, o)
+        a = np.clip(a, -1.0, 1.0)
+        self.alpha = np.arccos(a)
+
     # MARK: - get_cosines()
 
-    def get_cosines(self, s=None, o=None):
+    def get_cosines(self, s=None, o=None, recompute=True):
+        if self._cosines_ready and recompute is False:
+            return
+
         self.get_geometry()
 
         if s is None: 
@@ -120,10 +135,6 @@ class Asteroid:
 
         s = np.asarray(s, dtype=np.double)
         o = np.asarray(o, dtype=np.double)
-
-        d = np.dot(s, o)
-        d = np.clip(d, -1.0, 1.0)
-        self.alpha = np.arccos(d)
 
         self.mu_i = self.shape.normals @ s
         self.mu_e = self.shape.normals @ o
@@ -160,9 +171,11 @@ class Asteroid:
         self.nu_i = self.nu_i_C
         self.nu_e = self.nu_e_C
 
+        self._cosines_ready = True
+
     # MARK: - get_fluxes()
 
-    def get_fluxes(self, s=None, o=None, f_func=None):
+    def get_fluxes(self, s=None, o=None, f_func=None, recompute=True):
         if s is None: 
             s = self.s
         if o is None: 
@@ -170,7 +183,8 @@ class Asteroid:
         if f_func is None:
             f_func = self.f_func
 
-        self.get_cosines(s=s, o=o)
+        self.get_cosines(s=s, o=o, recompute=recompute)
+        self.get_alpha(s=s, o=o)
 
         phi_s = 1361. # W/m^2
         self.phi_i = phi_s * self.mu_i * self.nu_i
@@ -301,12 +315,17 @@ class Asteroid:
     # MARK: - interactive_plot()
 
     def interactive_plot(self):
-        # Call geometry and flux setup with CLI vectors
-        self.get_geometry()
-        self.get_cosines()
+        self.get_alpha()
+
+        scattering.B0 = 1.32
+        scattering.minh = 0.20
+        scattering.ming = -0.35
+        scattering.bartheta = 10.0 * np.pi/180
+        scattering.init_hapke(self.alpha)
+
+        self.f_func = scattering.f_hapke
         self.get_fluxes()
 
-        # Provide defaults if args is None
         shininess = (self.args.shininess if self.args and 
                      hasattr(self.args, "shininess") else 100)
         wireframe_width = (self.args.wireframe_width if self.args and 
@@ -394,7 +413,7 @@ class Asteroid:
         )
 
         ts = vispy.scene.visuals.Text(
-            "'s' to view from light direction", 
+            "'s' to view from the Sun direction", 
             anchor_x='left', 
             pos=(20, 160), 
             font_size=10,
@@ -482,35 +501,35 @@ class Asteroid:
 
         s_label = vispy.scene.visuals.Text(
             "s",
-            pos=scale * self.s + 5 * self.s,
+            pos= 1.1 * scale * self.s,
             color='white',
             font_size=8,
             parent=self.view.scene
         )
         o_label = vispy.scene.visuals.Text(
             "o",
-            pos=scale * self.o + 5 * self.o,
+            pos=1.1 * scale * self.o,
             color='white',
             font_size=8,
             parent=self.view.scene
         )
         x_label = vispy.scene.visuals.Text(
             "x",
-            pos=(scale + 5, 0, 0),
+            pos=(scale * 1.05, 0, 0),
             color='white',
             font_size=8,
             parent=self.view.scene
         )
         y_label = vispy.scene.visuals.Text(
             "y",
-            pos=(0, scale + 5, 0),
+            pos=(0, scale * 1.05, 0),
             color='white',
             font_size=8,
             parent=self.view.scene
         )
         z_label = vispy.scene.visuals.Text(
             "z",
-            pos=(0, 0, scale + 5),
+            pos=(0, 0, scale * 1.05),
             color='white',
             font_size=8,
             parent=self.view.scene
@@ -615,12 +634,12 @@ class Asteroid:
 
             elif event.key == '2':
                 self.f_func = scattering.f_lambert
-                self.get_fluxes()
+                self.get_fluxes(recompute=False)
                 plot_fluxes(self.phi_e)
 
             elif event.key == '3':
                 self.f_func = scattering.f_lommel
-                self.get_fluxes()
+                self.get_fluxes(recompute=False)
                 plot_fluxes(self.phi_e)
 
             elif event.key == '4':
@@ -631,7 +650,7 @@ class Asteroid:
 
                 scattering.init_hapke(self.alpha)
                 self.f_func = scattering.f_hapke
-                self.get_fluxes()
+                self.get_fluxes(recompute=False)
                 plot_fluxes(self.phi_e)
 
             elif event.key == '5':
@@ -685,5 +704,8 @@ class Asteroid:
                 for v in self.overlays:
                     v.visible = visible
 
-        plot_fluxes(self.I)
+            elif event.key == 'r':
+                self.view.camera.roll += 10
+
+        plot_fluxes(self.phi_e)
         self.canvas.show()
