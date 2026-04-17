@@ -16,7 +16,7 @@ class DamitClient:
 
     def fetch_text(self, url: str, *, timeout: float) -> str:
         try:
-            response = requests.get(url, timeout=timeout, verify=False)
+            response = requests.get(url, timeout=timeout)
             response.raise_for_status()
         except requests.HTTPError as exc:
             raise DamitError(f"HTTP error while fetching '{url}': {exc}") from exc
