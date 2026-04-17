@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tvet"
+version = "0.1.0"
+description = "Python package for visualization and analysis of asteroid shape models and their light curves."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy", "vispy", "matplotlib", "requests", "glfw"]
+authors = [
+    { name = "Rostislav Brož" }
+]
+license = "MIT"
+
+[project.urls]
+Homepage = "https://github.com/brozrost/tvet"
+Repository = "https://github.com/brozrost/tvet"
+
+[tool.setuptools]
+packages = ["tvet"]
+
+[project.scripts]
+tvet = "tvet.cli:main"

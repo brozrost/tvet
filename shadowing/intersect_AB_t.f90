@@ -1,1 +1,0 @@
-/Users/rostislavbroz/Documents/GitHub/tvet/src/Shadowing/intersect_AB_t.f90

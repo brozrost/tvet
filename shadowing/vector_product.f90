@@ -1,1 +1,0 @@
-/Users/rostislavbroz/Documents/GitHub/tvet/src/Shadowing/vector_product.f90

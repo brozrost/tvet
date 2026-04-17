@@ -1,1 +1,0 @@
-./compute_python_wrapper.py

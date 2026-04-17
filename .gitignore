@@ -205,3 +205,14 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# macOS
+.DS_Store
+
+# CLI output files
+out/
+
+*.out
+.vscode
+asteroid.obj
+bennu.obj
