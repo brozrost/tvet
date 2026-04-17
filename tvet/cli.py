@@ -17,28 +17,28 @@ def parse_vector(vec_str):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="TVET CLI - Asteroid Visualization with live ephemerides and light curves.",
+        description="Python package for visualization and analysis of asteroid shape models and their light curves.",
         usage="""
-        tvet -h/--help
+        tvet --help
 
         tvet <obj_file> [options]
-            Example: tvet asteroid.obj -l
+            tvet asteroid.obj -l
 
         tvet --jpl <id> --start <t> --stop <t> --step <dt> [options]
-            Example: tvet --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
+            tvet --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
 
         tvet --damit <id> [options]
-            Example: tvet --damit 10809
+            tvet --damit 10809
 
         tvet <obj_file> --jpl <id> --start <t> --stop <t> --step <dt> [options]
-            Example: tvet asteroid.obj --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
+            tvet asteroid.obj --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
         
         tvet --damit <id> --jpl <id> --start <t> --stop <t> --step <dt> [options]
-            Example: tvet --damit 10809 --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
+            tvet --damit 10809 --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
         """
     )
 
-    parser.add_argument("filename", nargs="?", help="Path to local OBJ file (optional).")
+    parser.add_argument("filename", nargs="?", help="Path to local OBJ file (optional)")
 
     parser.add_argument("-j", "--jpl", dest="jpl_id", type=int, help="JPL Horizons body id (integer)")
     parser.add_argument("-d", "--damit", dest="damit_id", type=int, help="DAMIT asteroid/model id (integer)")
@@ -50,7 +50,7 @@ def main():
     parser.add_argument("--cosines", action="store_true", help="Returns mu_i and mu_e and saves them to out/mu_i.txt and out/mu_e.txt")
     parser.add_argument("--fluxes", action="store_true", help="Returns phi_i, phi_e, and total flux and saves them to out/phi_i.txt, out/phi_e.txt, and out/total_flux.txt")
     parser.add_argument("--spin", type=float, nargs=5, metavar=("L", "B", "PERIOD", "EPOCH", "PHI0"), help="Spin state: l, b, period, epoch, phi0. Example: --spin 4.0 0.0 1.2 1.57 0.0")
-    parser.add_argument("-l", "--light-curve", action="store_true", help="Save the asteroid light curve points to out/light_curve.txt and plot the light curve.")
+    parser.add_argument("-l", "--light-curve", action="store_true", help="Save the asteroid light curve points to out/light_curve.txt and plot the light curve")
 
     parser.add_argument("-i", "--interactive-plot", action="store_true", help="Plot the interactive asteroid geometry and light curve")
     parser.add_argument('--shininess', type=float, default=100, help="Shininess factor for the asteroid surface")
@@ -67,7 +67,7 @@ def main():
     parser.add_argument("-v", "--verbose", type=int, nargs="?", const=3, default=0, help="Show preview of first n elements (defaults to 3)")
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress all stdout output (files are still saved)")
     parser.add_argument("--no-save", action="store_true", help="Do not create output files/directories")
-    parser.add_argument("--no-normalize", dest="normalize", action="store_false", help="Disable normalization of all vectors before computation.")
+    parser.add_argument("--no-normalize", dest="normalize", action="store_false", help="Disable normalization of all vectors before computation")
 
     args = parser.parse_args()
 
