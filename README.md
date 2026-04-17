@@ -1,4 +1,4 @@
-Python package for visualization and analysis of asteroid shape models and their light curves.
+`tvet` is a Python package for visualization and analysis of asteroid shape models and their light curves. It computes mesh geometry, photometric cosines, fluxes, and light curves using selectable scattering laws. The tool also supports plotting light curves and interactive visualization of asteroid geometry and photometric data.
 
 <div align="center">
   <a href="https://github.com/brozrost/tvet/actions">
