@@ -26,11 +26,11 @@ class HorizonsClient:
     def _send_request(self, *, params: dict, timeout: float) -> str:
         try:
             response = requests.get(self.base_url, params=params, timeout=timeout)
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            raise HorizonsError(f"HTTP error while fetching '{self.base_url}': {exc}") from exc
         except requests.RequestException as exc:
-            raise HorizonsError(f"Network error: {exc}") from exc
-
-        if response.status_code != 200:
-            raise HorizonsError(f"HTTP {response.status_code}: {response.text}")
+            raise HorizonsError(f"Network error while fetching '{self.base_url}': {exc}") from exc
 
         try:
             data = response.json()

@@ -17,11 +17,11 @@ class DamitClient:
     def fetch_text(self, url: str, *, timeout: float) -> str:
         try:
             response = requests.get(url, timeout=timeout, verify=False)
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            raise DamitError(f"HTTP error while fetching '{url}': {exc}") from exc
         except requests.RequestException as exc:
-            raise DamitError(f"Network error: {exc}") from exc
-        
-        if response.status_code != 200:
-            raise DamitError(f"HTTP {response.status_code} for {url}")
+            raise DamitError(f"Network error while fetching '{url}': {exc}") from exc
         
         if not response.text.strip():
             raise DamitError(f"Empty response from {url}")
