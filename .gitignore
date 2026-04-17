@@ -215,3 +215,4 @@ out/
 *.out
 .vscode
 asteroid.obj
+bennu.obj
