@@ -1,0 +1,4 @@
+include LICENSE
+include README.md
+include tvet/_tvet.c
+recursive-include tvet/csrc *.c *.h
