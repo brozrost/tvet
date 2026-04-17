@@ -1,80 +1,91 @@
-## Command-line tool for analyzing and visualizing 3D asteroid models. Supports geometry extraction, photometric calculations, light curve generation, and interactive or static plotting.
+Python package for visualization and analysis of asteroid shape models and their light curves.
 
 <div align="center">
-  <a href="https://github.com/scraptechguy/tvet/actions">
-    <img src="https://github.com/scraptechguy/tvet/actions/workflows/python-package.yml/badge.svg">
+  <a href="https://github.com/brozrost/tvet/actions">
+    <img src="https://github.com/brozrost/tvet/actions/workflows/python-package.yml/badge.svg">
   </a>
-  <a href="https://github.com/scraptechguy/tvet/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/scraptechguy/tvet">
+  <a href="https://github.com/brozrost/tvet/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/brozrost/tvet">
   </a>
-  <a href="https://github.com/scraptechguy/tvet/issues">
-    <img src="https://img.shields.io/github/issues/scraptechguy/tvet">
+  <a href="https://github.com/brozrost/tvet/issues">
+    <img src="https://img.shields.io/github/issues/brozrost/tvet">
   </a>
-  <a href="https://github.com/scraptechguy/tvet/pulls">
-    <img src="https://img.shields.io/github/issues-pr/scraptechguy/tvet">
+  <a href="https://github.com/brozrost/tvet/pulls">
+    <img src="https://img.shields.io/github/issues-pr/brozrost/tvet">
   </a>
 </div>
 
-## Python package installation
+## Installation
 
-1. Open a terminal in the project root.
-2. (Recommended) Create and activate a virtual environment:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-3. Install the package in editable mode:
-   ```bash
-   pip install -e .
-   ```
+`tvet` is available on PyPI, download with:
 
-## Usage and tvet --help
+```bash
+pip install tvet
+```
+
+## CLI usage
 
 After installation, you can use the `tvet` command-line tool:
 
+```bash
+tvet --help
 ```
-usage: 
-        tvet <filename> [options]
 
-        Example:
-            tvet asteroid.obj --plot-light-curve --s 1,0,0 --o 0,0,1
-        
+```bash
+tvet asteroid.obj
+```
 
-TVET CLI - Asteroid Visualization & Analysis
+```bash
+tvet --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
+```
 
-positional arguments:
-  filename              Path to OBJ file
+```bash
+tvet --damit 10809
+```
 
-options:
+```bash
+tvet asteroid.obj --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
+```
+
+```bash
+tvet --damit 10809 --jpl 103 --start 2026-02-16T00:00 --stop 2026-02-17T00:00 --step 10m
+```
+
+### Options
+```bash
   -h, --help            show this help message and exit
+  -j, --jpl JPL_ID      JPL Horizons body id (integer)
+  -d, --damit DAMIT_ID  DAMIT asteroid/model id (integer)
   --s S                 Incident light vector, e.g. '1,0,0'
   --o O                 Observer vector, e.g. '0,0,1'
   --scattering {lambert,lommel,hapke}
                         Scattering law to use: lambert, lommel, or hapke (default: lambert)
-  --geometry            Retruns centers and normals of the asteroid triangle mesh and saves them to
-                        output/centers.txt and output/normals.txt
-  --cosines             Returns mu_i and mu_e and saves them to output/mu_i.txt and output/mu_e.txt
-  --fluxes              Returns phi_i, phi_e, and total flux and saves them to output/phi_i.txt,
-                        output/phi_e.txt, and output/total_flux.txt
-  --light-curve         Save the asteroid light curve points to output/light_curve.txt
-  --plot-light-curve    Plot the asteroid light curve using matplotlib
-  --interactive-plot    Plot the interactive asteroid geometry and light curve
+  --geometry            Returns centers and normals of the asteroid triangle mesh and saves them to out/centers.txt and out/normals.txt
+  --cosines             Returns mu_i and mu_e and saves them to out/mu_i.txt and out/mu_e.txt
+  --fluxes              Returns phi_i, phi_e, and total flux and saves them to out/phi_i.txt, out/phi_e.txt, and out/total_flux.txt
+  --spin L B PERIOD EPOCH PHI0
+                        Spin state: l, b, period, epoch, phi0. Example: --spin 4.0 0.0 1.2 1.57 0.0
+  -l, --light-curve     Save the asteroid light curve points to out/light_curve.txt and plot the light curve
+  -i, --interactive-plot
+                        Plot the interactive asteroid geometry and light curve
   --shininess SHININESS
                         Shininess factor for the asteroid surface
   --wireframe-width WIREFRAME_WIDTH
                         Width of the wireframe lines
+  --start START_TIME    Ephemeris start time (e.g. 2026-02-16T00:00)
+  --stop STOP_TIME      Ephemeris stop time (e.g. 2026-02-17T00:00)
+  --step STEP_SIZE      Ephemeris step size (e.g. 10m, 1h, 1d)
+  --observer-center OBSERVER_CENTER
+                        Horizons center for observer (default: 500@399)
+  --sun-center SUN_CENTER
+                        Horizons center for Sun (default: 500@10)
+  --timeout TIMEOUT     Horizons request timeout in seconds (default: 30)
+  -v, --verbose [VERBOSE]
+                        Show preview of first n elements (defaults to 3)
+  -q, --quiet           Suppress all stdout output (files are still saved)
+  --no-save             Do not create output files/directories
+  --no-normalize        Disable normalization of all vectors before computation
 ```
-
-#### Example
-
-```bash
-tvet asteroid.obj --plot-light-curve --s 1,0,0 --o 0,0,1
-```
-
-This will plot a light curve for vectors s and o. 
-
-**Note:**  
-All `.txt` files generated by CLI commands are ignored by git (see `.gitignore`).
 
 For more details, see the [Key concepts](https://github.com/scraptechguy/tvet/blob/main/docs/CONCEPTS.md).
 
@@ -82,5 +93,3 @@ For more details, see the [Key concepts](https://github.com/scraptechguy/tvet/bl
 
 + <b><a href="https://github.com/scraptechguy/tvet/blob/main/docs/CONCEPTS.md">Key concepts</a></b> (explains all key concepts used in tvet)
 + <b><a href="https://sirrah.troja.mff.cuni.cz/~mira/tmp/diplomky/Broz_2024.pdf">Dokumentace v češtině</a></b>
-
-`tvet 1826.obj -j 216 --start JD2457956.680048 --stop JD2457956.680049 --step 1m --spin 72.288710 21.7272233 0.224386764166667 2444502.76914 0.0`
