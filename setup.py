@@ -11,7 +11,7 @@ setup(
                 "tvet/csrc/bounding_box.c",
                 "tvet/csrc/shadowing.c",
             ],
-            include_dirs=["tvet/csrc"],
+            include_dirs=["tvet/"],
         )
     ]
 )
