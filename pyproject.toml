@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tvet"
-version = "1.0.0"
-description = "Asteroid shape / lightcurve tools"
+version = "0.1.0"
+description = "Python package for visualization and analysis of asteroid shape models and their light curves."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["numpy", "vispy", "matplotlib", "requests", "glfw"]
