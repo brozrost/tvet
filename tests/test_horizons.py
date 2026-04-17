@@ -1,5 +1,8 @@
+def test_import():
+    import tvet
+
 def main():
-    pass
+    test_import()
 
 if __name__ == "__main__":
     main()
